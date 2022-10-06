@@ -6,20 +6,17 @@ import type {
   ActionFunction,
 } from "@remix-run/cloudflare";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { prisma } from "~/prisma/index.server";
 
 export const loader: LoaderFunction = async ({
   request,
   context,
+  params,
 }: DataFunctionArgs) => {
-  const url = new URL(request.url);
-
-  const counter = context?.COUNTER as DurableObjectNamespace;
-  const id = counter.idFromName("A");
-  const obj = counter.get(id);
-  const resp = await obj.fetch(`${url.origin}/current`);
-  const count = await resp.text();
-
-  return json(count);
+  await prisma.$connect();
+  const feeds = await prisma.feed.findUnique({ where: { id: params.feedId }});
+  await prisma.$disconnect();
+  return json(feeds);
 };
 
 export const action: ActionFunction = async ({
