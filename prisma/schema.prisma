@@ -9,3 +9,83 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id String @id @db.Uuid @default(uuid())
+  name String
+  email String
+  status Boolean
+  createdAt DateTime @default(now())
+}
+
+model Company {
+  id String @id @db.Uuid @default(uuid())
+  name String
+  status Boolean
+  createdAt DateTime @default(now())
+}
+
+model Feed {
+  id String @id @db.Uuid @default(uuid())
+  title String
+  companyId String @db.Uuid
+  status Boolean
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id String @id @db.Uuid @default(uuid())
+  feedId String @db.Uuid
+  userId String @db.Uuid
+  title String
+  description String
+  status Boolean
+  createdAt DateTime @default(now())
+}
+
+model PostReaction {
+  id String @id @db.Uuid @default(uuid())
+  postId String @db.Uuid
+  userId String @db.Uuid
+  reaction Reaction
+  createdAt DateTime @default(now())
+}
+
+model PostReviewRequest {
+  id String @id @db.Uuid @default(uuid())
+  postId String @db.Uuid
+  userId String @db.Uuid
+  createdAt DateTime @default(now())
+}
+
+enum Reaction {
+  LIKE
+  HAHA
+  WOW
+  LOVE
+  ANGRY
+  SAD
+}
+
+model Comment {
+  id String @id @db.Uuid @default(uuid())
+  postId String @db.Uuid
+  userId String @db.Uuid
+  status Boolean
+  createdAt DateTime @default(now())
+}
+
+model CommentReviewRequest {
+  id String @id @db.Uuid @default(uuid())
+  comment String @db.Uuid
+  userId String @db.Uuid
+  createdAt DateTime @default(now())
+}
+
+model CommentReaction {
+  id String @id @db.Uuid @default(uuid())
+  commentId String @db.Uuid
+  userId String @db.Uuid
+  reaction Reaction
+  createdAt DateTime @default(now())
+}
