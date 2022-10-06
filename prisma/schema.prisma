@@ -13,7 +13,7 @@ datasource db {
 model Company {
   id        String   @id @default(uuid()) @db.Uuid
   name      String
-  status    Boolean
+  status    Boolean  @default(true)
   createdAt DateTime @default(now())
   User      User[]
   Feed      Feed[]
@@ -39,7 +39,7 @@ model Feed {
   id        String   @id @default(uuid()) @db.Uuid
   title     String
   companyId String   @db.Uuid
-  status    Boolean
+  status    Boolean  @default(true)
   createdAt DateTime @default(now())
   Company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   Post      Post[]
@@ -51,7 +51,7 @@ model Post {
   userId            String              @db.Uuid
   title             String
   description       String
-  status            Boolean
+  status            Boolean             @default(true)
   createdAt         DateTime            @default(now())
   Feed              Feed                @relation(fields: [feedId], references: [id], onDelete: Cascade)
   User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -83,7 +83,7 @@ model Comment {
   id                   String                 @id @default(uuid()) @db.Uuid
   postId               String                 @db.Uuid
   userId               String                 @db.Uuid
-  status               Boolean
+  status               Boolean                @default(true)
   createdAt            DateTime               @default(now())
   Post                 Post                   @relation(fields: [postId], references: [id], onDelete: Cascade)
   User                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)

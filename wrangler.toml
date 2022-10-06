@@ -1,0 +1,14 @@
+compatibility_date = "2022-01-05"
+compatibility_flags = []
+
+name = "feed"
+account_id = "81a3c643d366b765038fe5048ccee7cd"
+workers_dev = true
+# [ secrets ] #
+# DATABASE_URL
+# SHADOW_DATABASE_URL
+
+[env.production]
+workers_dev = false
+# [ env.production.secrets ] #
+# DATABASE_URL
