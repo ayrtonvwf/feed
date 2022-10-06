@@ -10,52 +10,104 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id String @id @db.Uuid @default(uuid())
-  name String
-  email String
-  status Boolean @default(true)
+model Company {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  status    Boolean
   createdAt DateTime @default(now())
+  User      User[]
+  Feed      Feed[]
 }
 
-model Company {
-  id String @id @db.Uuid @default(uuid())
-  name String
-  status Boolean
-  createdAt DateTime @default(now())
+model User {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  name                 String
+  email                String
+  status               Boolean                @default(true)
+  companyId            String                 @db.Uuid
+  createdAt            DateTime               @default(now())
+  Company              Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Post                 Post[]
+  PostReaction         PostReaction[]
+  PostReviewRequest    PostReviewRequest[]
+  Comment              Comment[]
+  CommentReviewRequest CommentReviewRequest[]
+  CommentReaction      CommentReaction[]
 }
 
 model Feed {
-  id String @id @db.Uuid @default(uuid())
-  title String
-  companyId String @db.Uuid
-  status Boolean
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  companyId String   @db.Uuid
+  status    Boolean
   createdAt DateTime @default(now())
+  Company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Post      Post[]
 }
 
 model Post {
-  id String @id @db.Uuid @default(uuid())
-  feedId String @db.Uuid
-  userId String @db.Uuid
-  title String
-  description String
-  status Boolean
-  createdAt DateTime @default(now())
+  id                String              @id @default(uuid()) @db.Uuid
+  feedId            String              @db.Uuid
+  userId            String              @db.Uuid
+  title             String
+  description       String
+  status            Boolean
+  createdAt         DateTime            @default(now())
+  Feed              Feed                @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PostReaction      PostReaction[]
+  PostReviewRequest PostReviewRequest[]
+  Comment           Comment[]
 }
 
 model PostReaction {
-  id String @id @db.Uuid @default(uuid())
-  postId String @db.Uuid
-  userId String @db.Uuid
-  reaction Reaction
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @db.Uuid
+  userId    String   @db.Uuid
+  reaction  Reaction
   createdAt DateTime @default(now())
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PostReviewRequest {
-  id String @id @db.Uuid @default(uuid())
-  postId String @db.Uuid
-  userId String @db.Uuid
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @db.Uuid
+  userId    String   @db.Uuid
   createdAt DateTime @default(now())
+  Post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id                   String                 @id @default(uuid()) @db.Uuid
+  postId               String                 @db.Uuid
+  userId               String                 @db.Uuid
+  status               Boolean
+  createdAt            DateTime               @default(now())
+  Post                 Post                   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CommentReviewRequest CommentReviewRequest[]
+  CommentReaction      CommentReaction[]
+}
+
+model CommentReviewRequest {
+  id        String   @id @default(uuid()) @db.Uuid
+  commentId String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  Comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CommentReaction {
+  id        String   @id @default(uuid()) @db.Uuid
+  commentId String   @db.Uuid
+  userId    String   @db.Uuid
+  reaction  Reaction
+  createdAt DateTime @default(now())
+  Comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Reaction {
@@ -65,27 +117,4 @@ enum Reaction {
   LOVE
   ANGRY
   SAD
-}
-
-model Comment {
-  id String @id @db.Uuid @default(uuid())
-  postId String @db.Uuid
-  userId String @db.Uuid
-  status Boolean
-  createdAt DateTime @default(now())
-}
-
-model CommentReviewRequest {
-  id String @id @db.Uuid @default(uuid())
-  comment String @db.Uuid
-  userId String @db.Uuid
-  createdAt DateTime @default(now())
-}
-
-model CommentReaction {
-  id String @id @db.Uuid @default(uuid())
-  commentId String @db.Uuid
-  userId String @db.Uuid
-  reaction Reaction
-  createdAt DateTime @default(now())
 }
