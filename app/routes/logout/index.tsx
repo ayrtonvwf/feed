@@ -8,7 +8,7 @@ import { authenticator } from "~/services/auth.server";
 export async function loader({ request }: LoaderArgs) {
   // If the user is already authenticated redirect to /dashboard directly
   return await authenticator.isAuthenticated(request, {
-    successRedirect: "/",
+    failureRedirect: "/",
   });
 };
 
@@ -23,10 +23,9 @@ export const action: ActionFunction = async ({
 export default function Index() {
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Entrar</h1>
+      <h1>Sair</h1>
       <Form method="post">
-        <input name="email" placeholder="E-mail" required minLength={5}/>
-        <button type="submit">Log in</button>
+        <button type="submit">Fazer logout</button>
       </Form>
     </div>
   );

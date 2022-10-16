@@ -28,7 +28,7 @@ export default function Index() {
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
       <h1>Entrar</h1>
       <Form method="post">
-        <input name="email" placeholder="E-mail" required minLength={5}/>
+        <input name="email" placeholder="E-mail" required minLength={5} type="email" />
         <button type="submit">Log in</button>
       </Form>
     </div>

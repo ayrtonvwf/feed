@@ -7,12 +7,13 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { Feed } from "@prisma/client";
+import { Feed, User } from "@prisma/client";
 import { DataFunctionArgs, json, LoaderFunction } from "@remix-run/cloudflare";
 import { Link, useLoaderData } from "@remix-run/react";
 import { TypedResponse } from "@remix-run/react/dist/components";
 import { prisma } from "~/services/prisma.server";
 import { getSession } from "~/services/session.server";
+import { authenticator } from "./services/auth.server";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -22,8 +23,8 @@ export const meta: MetaFunction = () => ({
 
 type LoaderData = {
   feeds: Feed[];
-  userId: string|null;
-  companyId: string|null;
+  user: User|null;
+  tenantId: string|null;
 }
 
 export const loader: LoaderFunction = async ({
@@ -31,21 +32,21 @@ export const loader: LoaderFunction = async ({
   context,
 }: DataFunctionArgs): Promise<TypedResponse<LoaderData>> => {
   const session = await getSession(request.headers.get("cookie"));
-  const userId: string|null = session.get('userId')?.toString() || null;
-  const companyId: string|null = session.get('companyId')?.toString() || null;
+  const user = await authenticator.isAuthenticated(request);
+  const tenantId: string|null = session.get('tenantId')?.toString() || null;
 
-  if (!companyId) {
-    return json({ feeds: [], userId, companyId });
+  if (!tenantId) {
+    return json({ feeds: [], user, tenantId });
   }
 
   await prisma.$connect();
-  const feeds = await prisma.feed.findMany({ where: { companyId } });
+  const feeds = await prisma.feed.findMany({ where: { tenantId } });
   await prisma.$disconnect();
-  return json({ feeds });
+  return json({ feeds, user, tenantId });
 };
 
 export default function App() {
-  const { feeds, companyId, userId } = useLoaderData<LoaderData>();
+  const { feeds, tenantId, user } = useLoaderData<LoaderData>();
 
   return (
     <html lang="pt-BR">
@@ -55,12 +56,18 @@ export default function App() {
       </head>
       <body>
         <header>
-          {companyId && <b>{companyId}</b>}
-          <Link to="/">Home</Link>
-          <Link to="/companies">Empresas</Link>
-          {userId && <Link to="/logout">Sair</Link>}
-          {!userId && <Link to="/login">Entrar</Link>}
-          {feeds.map(feed => <Link to={`/feed/${feed.id}`} key={feed.id}>{feed.title}</Link>)}
+          {tenantId && <b>{tenantId}</b>}
+          {user && <b>{user.id}</b>}
+          <nav>
+            <Link to="/">Home</Link>
+            <Link to="/tenants">Tenants</Link>
+            <Link to="/users">Usuários</Link>
+            {user && <Link to="/logout">Sair</Link>}
+            {!user && <Link to="/login">Entrar</Link>}
+          </nav>
+          <nav>
+            {feeds.map(feed => <Link to={`/feed/${feed.id}`} key={feed.id}>{feed.title}</Link>)}
+          </nav>
         </header>
         <Outlet />
         <ScrollRestoration />

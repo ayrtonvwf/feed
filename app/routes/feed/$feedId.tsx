@@ -8,6 +8,7 @@ import { Form, useLoaderData } from "@remix-run/react";
 import { prisma } from "~/services/prisma.server";
 import { Post } from "@prisma/client";
 import invariant from "tiny-invariant";
+import { authenticator } from "~/services/auth.server";
 
 export const loader: LoaderFunction = async ({
   request,
@@ -30,14 +31,20 @@ export const action: ActionFunction = async ({
 }: DataFunctionArgs) => {
   invariant(params.feedId, `params.feedId is required`);
 
+  const user = await authenticator.isAuthenticated(request);
+
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+
   const body = await request.formData();
   await prisma.$connect();
-  const todo = await prisma.post.create({
+  await prisma.post.create({
     data: {
       title: body.get('title')?.toString() || 'Sem título',
       description: body.get('description')?.toString() || 'Sem descrição',
       feedId: params.feedId,
-      userId: '0b3c3f94-4c3d-46cb-84a7-92794543dd4e',
+      userId: user.id,
     }
   });
   return redirect(`/feed/${params.feedId}`);
@@ -52,7 +59,7 @@ export default function () {
       <Form method="post">
         <input name="title" placeholder="Título" required minLength={5}/>
         <textarea name="description" placeholder="Descrição" required minLength={5}></textarea>
-        <button type="submit">Post</button>
+        <button type="submit" name="_action" value="post">Post</button>
       </Form>
       {feed.Post.map((post: Post) => <>
         <div>
