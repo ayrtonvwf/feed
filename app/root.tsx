@@ -13,7 +13,6 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { TypedResponse } from "@remix-run/react/dist/components";
 import { prisma } from "~/services/prisma.server";
 import { getSession } from "~/services/session.server";
-import { authenticator } from "./services/auth.server";
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",

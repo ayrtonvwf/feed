@@ -10,54 +10,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Company {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  status    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  User      User[]
-  Feed      Feed[]
+model Tenant {
+  id         String       @id @default(uuid()) @db.Uuid
+  name       String
+  status     Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  Feed       Feed[]
+  TenantUser TenantUser[]
 }
 
 model User {
-  id                   String                 @id @default(uuid()) @db.Uuid
-  name                 String
-  email                String
-  status               Boolean                @default(true)
-  companyId            String                 @db.Uuid
-  createdAt            DateTime               @default(now())
-  Company              Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  Post                 Post[]
-  PostReaction         PostReaction[]
-  PostReviewRequest    PostReviewRequest[]
-  Comment              Comment[]
-  CommentReviewRequest CommentReviewRequest[]
-  CommentReaction      CommentReaction[]
+  id                       String                     @id @default(uuid()) @db.Uuid
+  name                     String
+  email                    String
+  status                   Boolean                    @default(true)
+  createdAt                DateTime                   @default(now())
+  type                     UserType                   @default(NORMAL)
+  Post                     Post[]
+  PostReaction             PostReaction[]
+  PostModerationRequest    PostModerationRequest[]
+  Comment                  Comment[]
+  CommentModerationRequest CommentModerationRequest[]
+  CommentReaction          CommentReaction[]
+  TenantUser               TenantUser[]
+}
+
+enum UserType {
+  NORMAL
+  SUPERADMIN
+}
+
+model TenantUser {
+  id        String         @id @default(uuid()) @db.Uuid
+  tenantId  String         @db.Uuid
+  userId    String         @db.Uuid
+  type      TenantUserType @default(NORMAL)
+  createdAt DateTime       @default(now())
+  Tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  User      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TenantUserType {
+  NORMAL
+  MODERATOR
+  MANAGER
 }
 
 model Feed {
   id        String   @id @default(uuid()) @db.Uuid
   title     String
-  companyId String   @db.Uuid
+  tenantId  String   @db.Uuid
   status    Boolean  @default(true)
   createdAt DateTime @default(now())
-  Company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  Tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   Post      Post[]
 }
 
 model Post {
-  id                String              @id @default(uuid()) @db.Uuid
-  feedId            String              @db.Uuid
-  userId            String              @db.Uuid
-  title             String
-  description       String
-  status            Boolean             @default(true)
-  createdAt         DateTime            @default(now())
-  Feed              Feed                @relation(fields: [feedId], references: [id], onDelete: Cascade)
-  User              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  PostReaction      PostReaction[]
-  PostReviewRequest PostReviewRequest[]
-  Comment           Comment[]
+  id                    String                  @id @default(uuid()) @db.Uuid
+  feedId                String                  @db.Uuid
+  userId                String                  @db.Uuid
+  title                 String
+  description           String
+  status                Boolean                 @default(true)
+  createdAt             DateTime                @default(now())
+  Feed                  Feed                    @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  User                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PostReaction          PostReaction[]
+  PostModerationRequest PostModerationRequest[]
+  Comment               Comment[]
 }
 
 model PostReaction {
@@ -70,7 +91,7 @@ model PostReaction {
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model PostReviewRequest {
+model PostModerationRequest {
   id        String   @id @default(uuid()) @db.Uuid
   postId    String   @db.Uuid
   userId    String   @db.Uuid
@@ -80,18 +101,18 @@ model PostReviewRequest {
 }
 
 model Comment {
-  id                   String                 @id @default(uuid()) @db.Uuid
-  postId               String                 @db.Uuid
-  userId               String                 @db.Uuid
-  status               Boolean                @default(true)
-  createdAt            DateTime               @default(now())
-  Post                 Post                   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  User                 User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  CommentReviewRequest CommentReviewRequest[]
-  CommentReaction      CommentReaction[]
+  id                       String                     @id @default(uuid()) @db.Uuid
+  postId                   String                     @db.Uuid
+  userId                   String                     @db.Uuid
+  status                   Boolean                    @default(true)
+  createdAt                DateTime                   @default(now())
+  Post                     Post                       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  User                     User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CommentModerationRequest CommentModerationRequest[]
+  CommentReaction          CommentReaction[]
 }
 
-model CommentReviewRequest {
+model CommentModerationRequest {
   id        String   @id @default(uuid()) @db.Uuid
   commentId String   @db.Uuid
   userId    String   @db.Uuid
