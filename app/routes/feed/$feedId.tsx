@@ -1,12 +1,11 @@
-import { useParams } from "@remix-run/react";
 import { json, redirect } from "@remix-run/cloudflare";
 import type {
   LoaderFunction,
   DataFunctionArgs,
   ActionFunction,
 } from "@remix-run/cloudflare";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
-import { prisma } from "~/prisma/index.server";
+import { Form, useLoaderData } from "@remix-run/react";
+import { prisma } from "~/services/prisma.server";
 import { Post } from "@prisma/client";
 import invariant from "tiny-invariant";
 

@@ -6002,6 +6002,20 @@ remark-rehype@^9.0.0:
     mdast-util-to-hast "^11.0.0"
     unified "^10.0.0"
 
+remix-auth-form@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/remix-auth-form/-/remix-auth-form-1.2.0.tgz#6b8726d9b9b3716b3bcbd86fa1b6578794013f3e"
+  integrity sha512-iJyDhvRBctP9cJBTsU54X9K+E03XzPCVxtXRCq/+Fd4A+yqSKPAfmnSP5MnIHOnjlCGwOino8XQcj5m+UFN7QQ==
+  dependencies:
+    remix-auth "^3.1.0"
+
+remix-auth@^3.1.0, remix-auth@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/remix-auth/-/remix-auth-3.3.0.tgz#38f2e8825c42c0ebd89737992787b11b663fb42c"
+  integrity sha512-sLY5s6DQF4OJp03HM/dIEw3tLfSOIowerS2QDTuvEVXoEA3IHVmk7QkvOKosWdVPbcnlRfwF6PbeBLKgo6vqsg==
+  dependencies:
+    uuid "^8.3.2"
+
 repeat-element@^1.1.2:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/repeat-element/-/repeat-element-1.1.4.tgz#be681520847ab58c7568ac75fbfad28ed42d39e9"
@@ -6977,6 +6991,11 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
+
+uuid@^8.3.2:
+  version "8.3.2"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
+  integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
 
 uvu@^0.5.0:
   version "0.5.6"
