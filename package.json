@@ -2,10 +2,16 @@
   "private": false,
   "sideEffects": false,
   "scripts": {
-    "build": "prisma generate --data-proxy && remix build",
+    "build": "yarn build:css && yarn build:prisma && yarn build:remix",
+    "build:css": "tailwindcss -m -i ./styles/app.css -o app/styles/app.css",
+    "build:prisma": "prisma generate --data-proxy",
+    "build:remix": "remix build",
+
     "dev:remix": "remix watch",
     "dev:wrangler": "cross-env NODE_ENV=development wrangler pages dev ./public",
-    "dev": "remix build && run-p \"dev:*\"",
+    "dev": "concurrently \"yarn dev:css \" \"remix build && run-p \\\"dev:*\\\"\"",
+    "dev:css": "tailwindcss -w -i ./styles/app.css -o app/styles/app.css",
+
     "start": "cross-env NODE_ENV=production npm run dev:wrangler"
   },
   "dependencies": {
@@ -26,9 +32,13 @@
     "@remix-run/eslint-config": "^1.6.8",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
+    "autoprefixer": "^10.4.12",
+    "concurrently": "^7.4.0",
     "eslint": "^8.22.0",
     "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.18",
     "prisma": "^4.4.0",
+    "tailwindcss": "^3.1.8",
     "typescript": "^4.7.4",
     "wrangler": "^2.0.27"
   },
