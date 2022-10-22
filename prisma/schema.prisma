@@ -105,6 +105,7 @@ model Comment {
   postId                   String                     @db.Uuid
   userId                   String                     @db.Uuid
   status                   Boolean                    @default(true)
+  description              String
   createdAt                DateTime                   @default(now())
   Post                     Post                       @relation(fields: [postId], references: [id], onDelete: Cascade)
   User                     User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
