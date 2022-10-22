@@ -16,6 +16,7 @@ import { authenticator } from "./services/auth.server";
 import { MyNavLink } from "./components/header/link";
 import styles from "./styles/app.css"
 import { TypedResponse } from "@remix-run/react/dist/components";
+import { useTransition } from '@remix-run/react';
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: styles }
@@ -74,6 +75,7 @@ export const action: ActionFunction = async ({
 };
 
 export default function App() {
+  const transition = useTransition();
   const { feeds, tenantId, user, tenants } = useLoaderData<LoaderData>();
   const submit = useSubmit();
 
@@ -85,10 +87,11 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body>
-        <header>
+      <body className="bg-slate-200">
+        <header className="bg-white shadow">
           {tenantId && <b>{tenantId}</b>}
           {user && <b>{user.id}</b>}
+          {transition.state !== "idle" && 'Loading...'}
           <nav>
             <MyNavLink to="/">Home</MyNavLink>
             <MyNavLink to="/tenants">Tenants</MyNavLink>
@@ -106,9 +109,13 @@ export default function App() {
             {user && <MyNavLink to="/logout">Sair</MyNavLink>}
             {!user && <MyNavLink to="/login">Entrar</MyNavLink>}
           </nav>
-          <nav>
-            {feeds.map(feed => <MyNavLink to={`/feed/${feed.id}`} key={feed.id}>{feed.title}</MyNavLink>)}
-          </nav>
+          <ul className="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200">
+            {feeds.map(feed => (
+              <li className="mr-2">
+                <MyNavLink to={`/feed/${feed.id}`} key={feed.id} className="inline-block px-4 py-2 text-blue-600 bg-gray-100 rounded-t-lg">{feed.title}</MyNavLink>
+              </li>
+            ))}
+          </ul>
         </header>
         <Outlet />
         <ScrollRestoration />
