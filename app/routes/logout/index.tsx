@@ -1,5 +1,6 @@
 import { ActionFunction, DataFunctionArgs, LoaderArgs } from "@remix-run/cloudflare";
 import { Form } from "@remix-run/react";
+import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 
 // Finally, we can export a loader function where we check if the user is
@@ -22,11 +23,11 @@ export const action: ActionFunction = async ({
 
 export default function Index() {
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Sair</h1>
+    <main className="container mx-auto">
+      <MyH1>Sair</MyH1>
       <Form method="post">
         <button type="submit">Fazer logout</button>
       </Form>
-    </div>
+    </main>
   );
 }

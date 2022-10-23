@@ -1,6 +1,7 @@
 import { User } from "@prisma/client";
 import { ActionFunction, DataFunctionArgs, json, LoaderFunction, redirect } from "@remix-run/cloudflare";
 import { Form, Link, useLoaderData } from "@remix-run/react";
+import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { hash } from "~/services/hash.server";
 import { prisma } from "~/services/prisma.server";
@@ -46,14 +47,14 @@ export const action: ActionFunction = async ({
 
 export default function Index() {
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Crie aqui agora mesmo a sua nova conta para você estar usando esse maravilhoso sistema de feed</h1>
+    <main className="container mx-auto">
+      <MyH1>Crie aqui agora mesmo a sua nova conta para você estar usando esse maravilhoso sistema de feed</MyH1>
       <Form method="post">
         <input name="name" placeholder="Nome" required minLength={5} />
         <input name="email" placeholder="E-mail" required minLength={5} type="email" />
         <input name="password" placeholder="Senha" required minLength={5} type="password" />
         <button type="submit">Sign up</button>
       </Form>
-    </div>
+    </main>
   );
 }

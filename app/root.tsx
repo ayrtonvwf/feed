@@ -41,18 +41,38 @@ export const loader: LoaderFunction = async ({
 }: DataFunctionArgs): Promise<TypedResponse<LoaderData>> => {
   const session = await getSession(request.headers.get("cookie"));
   const user = await authenticator.isAuthenticated(request);
-  const tenantId: string|null = session.get('tenantId')?.toString() || null;
-  await prisma.$connect();
-  const tenants = await prisma.tenant.findMany();
 
-  if (!tenantId) {
-    await prisma.$disconnect();
-    return json({ feeds: [], user, tenantId, tenants });
+  if (!user) {
+    return json({ feeds: [], user, tenantId: null, tenants: [] });
   }
 
-  const feeds = await prisma.feed.findMany({ where: { tenantId } });
+  await prisma.$connect();
+  const tenants = await prisma.tenant.findMany({
+    where: {
+      TenantUser: {
+        some: {
+          userId: user.id
+        }
+      }
+    }
+  });
+
+  const sessionTenantId = session.get('tenantId')?.toString();
+  const tenantId: string|null = sessionTenantId || tenants[0]?.id || null;
+
+  const shouldSetTenantId = !sessionTenantId && tenantId;
+  if (shouldSetTenantId) {
+    session.set('tenantId', tenantId);
+  }
+
+  const feeds = tenantId ? await prisma.feed.findMany({ where: { tenantId } }) : [];
   await prisma.$disconnect();
-  return json({ feeds, user, tenantId, tenants });
+
+  return json({ feeds, user, tenantId, tenants }, shouldSetTenantId ? {
+    headers: {
+      "Set-Cookie": await commitSession(session),
+    }
+  } : undefined);
 };
 
 export const action: ActionFunction = async ({
@@ -93,8 +113,10 @@ export default function App() {
           <nav>
             <MyNavLink to="/">Home</MyNavLink>
             {user && <>
-              <MyNavLink to="/tenants">Tenants</MyNavLink>
-              <MyNavLink to="/users">Usuários</MyNavLink>
+              {user.type === "SUPERADMIN" && <>
+                <MyNavLink to="/tenants">Tenants</MyNavLink>
+                <MyNavLink to="/users">Usuários</MyNavLink>
+              </>}
               <Form onChange={onChangeTenant} method="post" className="inline">
                 <input type="hidden" name="_action" value="setTenant" />
                 <select name="id" defaultValue={tenantId || undefined}>

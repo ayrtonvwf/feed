@@ -1,8 +1,10 @@
+import { MyH1 } from "~/components/typography/title";
+
 export default function Index() {
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>(ma pare) Home</h1>
+    <main className="container mx-auto">
+      <MyH1>(ma pare) Home</MyH1>
       <p>Bem vindo/a/e à essa maravilhosa aplicação de Feed!</p>
-    </div>
+    </main>
   );
 }
