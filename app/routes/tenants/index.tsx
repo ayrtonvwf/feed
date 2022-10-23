@@ -1,6 +1,7 @@
 import { Tenant } from "@prisma/client";
 import { ActionFunction, DataFunctionArgs, json, LoaderFunction, redirect } from "@remix-run/cloudflare";
 import { Form, Link, useLoaderData } from "@remix-run/react";
+import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { commitSession, getSession } from "~/services/session.server";
@@ -9,9 +10,13 @@ export const loader: LoaderFunction = async ({
   request,
   context,
 }: DataFunctionArgs) => {
-  await authenticator.isAuthenticated(request, {
+  const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
+
+  if (!user || user.type !== "SUPERADMIN") {
+    return redirect('/');
+  }
 
   await prisma.$connect();
   const tenants = await prisma.tenant.findMany();
@@ -24,9 +29,13 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  await authenticator.isAuthenticated(request, {
+  const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
+
+  if (!user || user.type !== "SUPERADMIN") {
+    return redirect('/');
+  }
 
   const body = await request.formData();
   const { _action, ...values } = Object.fromEntries(body);
@@ -57,8 +66,8 @@ export default function Index() {
   const tenants = useLoaderData<Tenant[]>();
 
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Tenants</h1>
+    <main className="container mx-auto">
+      <MyH1>Tenants</MyH1>
       <Form method="post">
         <input name="name" placeholder="Nome" required minLength={5}/>
         <button type="submit" name="_action" value="create">Create</button>
@@ -74,6 +83,6 @@ export default function Index() {
           </li>
         ))}
       </ul>
-    </div>
+    </main>
   );
 }

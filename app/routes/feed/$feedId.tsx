@@ -10,6 +10,8 @@ import { Comment, Post, User } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { authenticator } from "~/services/auth.server";
 import { MyReactions } from "~/components/feed/reactions";
+import { MyH1 } from "~/components/typography/title";
+import { Panel } from "~/components/block/panel";
 
 export const loader: LoaderFunction = async ({
   request,
@@ -80,18 +82,20 @@ export default function () {
   const feed = useLoaderData();
 
   return (
-    <div className="container mx-auto">
-      <h1 className="text-xl font-bold">{feed.title}</h1>
-      <Form method="post" className="bg-white my-5 p-5 shadow">
-        <fieldset className="gap-2 flex flex-col">
-          <h2 className="text-lg font-semibold">Novo post</h2>
-          <input name="title" placeholder="Título" required minLength={5} className="block rounded-lg w-full bg-gray-200 p-2" />
-          <textarea name="description" placeholder="Descrição" required minLength={5} className="block rounded-lg w-full bg-gray-200 p-2"></textarea>
-          <button type="submit" name="_action" value="post" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md">Post it</button>
-        </fieldset>
-      </Form>
+    <main className="container mx-auto">
+      <MyH1>{feed.title}</MyH1>
+      <Panel>
+        <Form method="post">
+          <fieldset className="gap-2 flex flex-col">
+            <h2 className="text-lg font-semibold">Novo post</h2>
+            <input name="title" placeholder="Título" required minLength={5} className="block rounded-lg w-full bg-gray-200 p-2" />
+            <textarea name="description" placeholder="Descrição" required minLength={5} className="block rounded-lg w-full bg-gray-200 p-2"></textarea>
+            <button type="submit" name="_action" value="post" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md">Post it</button>
+          </fieldset>
+        </Form>
+      </Panel>
       {feed.Post.map((post: Post & { User: User, Comment: (Comment & { User: User })[] }) => <>
-        <div className="bg-white my-5 p-5 shadow gap-2 flex flex-col" key={post.id}>
+        <Panel key={post.id}>
           <div className="gap-2 flex flex-col mb-5">
             <div>
               <span className="text-sky-600">{post.User.name}</span>
@@ -101,7 +105,6 @@ export default function () {
             <p>{post.description}</p>
           </div>
           <hr />
-          <MyReactions />
           <div className="gap-2 flex flex-col">
             <Form method="post" className="gap-2 flex flex-col">
               <input type="hidden" name="postId" value={post.id} />
@@ -118,8 +121,8 @@ export default function () {
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
       </>)}
-    </div>
+    </main>
   );
 }

@@ -10,6 +10,7 @@ import { Feed, Post, Tenant } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { TypedResponse } from "@remix-run/react/dist/components";
 import { authenticator } from "~/services/auth.server";
+import { MyH1 } from "~/components/typography/title";
 
 type LoaderData = {
   feeds: Feed[];
@@ -21,9 +22,13 @@ export const loader: LoaderFunction = async ({
   context,
   params,
 }: DataFunctionArgs): Promise<TypedResponse<LoaderData>> => {
-  await authenticator.isAuthenticated(request, {
+  const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
+
+  if (!user || user.type !== "SUPERADMIN") {
+    return redirect('/');
+  }
 
   invariant(params.tenantId, `params.tenantId is required`);
 
@@ -56,6 +61,14 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
+  if (!user || user.type !== "SUPERADMIN") {
+    return redirect('/');
+  }
+
   invariant(params.tenantId, `params.tenantId is required`);
 
   const body = await request.formData();
@@ -80,8 +93,8 @@ export default function () {
   const {tenant, feeds} = useLoaderData<LoaderData>();
 
   return (
-    <div>
-      <h1>{tenant.name}</h1>
+    <main className="container mx-auto">
+      <MyH1>{tenant.name}</MyH1>
       <Form method="post">
         <h2>Criar feed</h2>
         <input name="title" placeholder="Título" required minLength={5}/>
@@ -92,6 +105,6 @@ export default function () {
           <h3>{feed.title}</h3>
         </div>
       </>)}
-    </div>
+    </main>
   );
 }
