@@ -3,6 +3,7 @@ import { Authenticator } from "remix-auth";
 import { sessionStorage } from "~/services/session.server";
 import { FormStrategy } from "remix-auth-form";
 import { prisma } from "./prisma.server";
+import { verify } from "./hash.server";
 
 /**
  * @see https://github.com/sergiodxa/remix-auth
@@ -21,16 +22,24 @@ authenticator.use(
     if (!email) {
       throw 'No e-mail provided'
     }
-    // const password = form.get("password");
+    const password = form.get("password")?.toString();
+    if (!password) {
+      throw 'No password provided'
+    }
+
     await prisma.$connect();
     const user = await prisma.user.findFirst({ where: { email }});
     await prisma.$disconnect();
     if (!user) {
-      throw 'Unauthenticated'
+      throw 'User not found';
     }
-    /**
-     * @todo: validate password
-     */
+    if (!user.passwordHash) {
+      throw 'No password defined';
+    }
+    const verified = await verify({ password, hash: user.passwordHash });
+    if (!verified) {
+      throw 'Invalid password';
+    }
     return user;
   }),
   // each strategy has a name and can be changed to use another one

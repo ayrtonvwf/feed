@@ -1,6 +1,7 @@
 import { User } from "@prisma/client";
 import { ActionFunction, DataFunctionArgs, json, LoaderFunction, redirect } from "@remix-run/cloudflare";
 import { Form, Link, useLoaderData } from "@remix-run/react";
+import { hash } from "~/services/hash.server";
 import { prisma } from "~/services/prisma.server";
 
 export const loader: LoaderFunction = async ({
@@ -19,13 +20,27 @@ export const action: ActionFunction = async ({
   params,
 }: DataFunctionArgs) => {
   const body = await request.formData();
+  const email = body.get('email')?.toString() || 'sem@email.com';
+  const password = body.get('password')?.toString() || 'Mudar123';
+
   await prisma.$connect();
+  const existing = await prisma.user.findFirst({
+    where: { email },
+  });
+  if (existing) {
+    await prisma.$disconnect();
+    throw new Error('User already exists');
+  }
+
   const user = await prisma.user.create({
     data: {
       name: body.get('name')?.toString() || 'Sem título',
       email: body.get('email')?.toString() || 'sem@email.com',
+      passwordHash: await hash({ password }),
     }
   });
+  await prisma.$disconnect();
+
   return redirect(`/users`);
 };
 
@@ -38,6 +53,7 @@ export default function Index() {
       <Form method="post">
         <input name="name" placeholder="Nome" required minLength={5} />
         <input name="email" placeholder="E-mail" required minLength={5} type="email" />
+        <input name="password" placeholder="Senha" required minLength={5} type="password" />
         <button type="submit">Sign up</button>
       </Form>
       <ul>

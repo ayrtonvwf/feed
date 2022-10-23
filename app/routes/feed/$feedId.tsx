@@ -87,7 +87,7 @@ export default function () {
         </fieldset>
       </Form>
       {feed.Post.map((post: Post & { User: User, Comment: (Comment & { User: User })[] }) => <>
-        <div className="bg-white my-5 p-5 shadow gap-2 flex flex-col">
+        <div className="bg-white my-5 p-5 shadow gap-2 flex flex-col" key={post.id}>
           <div className="gap-2 flex flex-col mb-5">
             <div>
               <span className="text-sky-600">{post.User.name}</span>
@@ -105,7 +105,7 @@ export default function () {
               <button type="submit" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md" name="_action" value="comment">Comentar</button>
             </Form>
             {post.Comment.map((comment) => (
-              <div className="gap-2 flex flex-col">
+              <div className="gap-2 flex flex-col" key={comment.id}>
                 <div>
                   <span className="text-sky-600">{comment.User.name}</span>
                   <span>{comment.createdAt.toLocaleString()}</span>
