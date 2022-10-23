@@ -9,6 +9,7 @@ import { prisma } from "~/services/prisma.server";
 import { Feed, Post, Tenant } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { TypedResponse } from "@remix-run/react/dist/components";
+import { authenticator } from "~/services/auth.server";
 
 type LoaderData = {
   feeds: Feed[];
@@ -20,6 +21,10 @@ export const loader: LoaderFunction = async ({
   context,
   params,
 }: DataFunctionArgs): Promise<TypedResponse<LoaderData>> => {
+  await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
   invariant(params.tenantId, `params.tenantId is required`);
 
   await prisma.$connect();

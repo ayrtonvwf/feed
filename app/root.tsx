@@ -89,32 +89,39 @@ export default function App() {
       </head>
       <body className="bg-slate-200">
         <header className="bg-white shadow">
-          {user && <div><b>User:</b> <span>{user.name}</span></div>}
           {transition.state !== "idle" && 'Loading...'}
           <nav>
             <MyNavLink to="/">Home</MyNavLink>
-            <MyNavLink to="/tenants">Tenants</MyNavLink>
-            <MyNavLink to="/users">Usuários</MyNavLink>
-            <Form onChange={onChangeTenant} method="post" className="inline">
-              <input type="hidden" name="_action" value="setTenant" />
-              <select name="id" defaultValue={tenantId || undefined}>
-                {tenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name}
-                  </option>
-                ))}
-              </select>
-            </Form>
-            {user && <MyNavLink to="/logout">Sair</MyNavLink>}
-            {!user && <MyNavLink to="/login">Entrar</MyNavLink>}
+            {user && <>
+              <MyNavLink to="/tenants">Tenants</MyNavLink>
+              <MyNavLink to="/users">Usuários</MyNavLink>
+              <Form onChange={onChangeTenant} method="post" className="inline">
+                <input type="hidden" name="_action" value="setTenant" />
+                <select name="id" defaultValue={tenantId || undefined}>
+                  {tenants.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name}
+                    </option>
+                  ))}
+                </select>
+              </Form>
+              <MyNavLink to={`/user/${user.id}`}>{user.name}</MyNavLink>
+              <MyNavLink to="/logout">Sair</MyNavLink>
+            </>}
+            {!user && <>
+              <MyNavLink to="/create-account">Criar conta</MyNavLink>
+              <MyNavLink to="/login">Entrar</MyNavLink>
+            </>}
           </nav>
-          <ul className="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200">
-            {feeds.map(feed => (
-              <li className="mr-2" key={feed.id}>
-                <MyNavLink to={`/feed/${feed.id}`} key={feed.id} className="inline-block px-4 py-2 text-blue-600 bg-gray-100 rounded-t-lg">{feed.title}</MyNavLink>
-              </li>
-            ))}
-          </ul>
+          {user && (
+            <ul className="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200">
+              {feeds.map(feed => (
+                <li className="mr-2" key={feed.id}>
+                  <MyNavLink to={`/feed/${feed.id}`} key={feed.id} className="inline-block px-4 py-2 text-blue-600 bg-gray-100 rounded-t-lg">{feed.title}</MyNavLink>
+                </li>
+              ))}
+            </ul>
+          )}
         </header>
         <Outlet />
         <ScrollRestoration />
