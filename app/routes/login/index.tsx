@@ -29,6 +29,7 @@ export default function Index() {
       <h1>Entrar</h1>
       <Form method="post">
         <input name="email" placeholder="E-mail" required minLength={5} type="email" />
+        <input name="password" placeholder="Senha" required minLength={5} type="password" />
         <button type="submit">Log in</button>
       </Form>
     </div>
