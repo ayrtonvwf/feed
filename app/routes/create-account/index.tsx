@@ -9,14 +9,9 @@ export const loader: LoaderFunction = async ({
   request,
   context,
 }: DataFunctionArgs) => {
-  await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+  return await authenticator.isAuthenticated(request, {
+    successRedirect: "/",
   });
-
-  await prisma.$connect();
-  const users = await prisma.user.findMany();
-  await prisma.$disconnect();
-  return json(users);
 };
 
 export const action: ActionFunction = async ({
@@ -46,28 +41,19 @@ export const action: ActionFunction = async ({
   });
   await prisma.$disconnect();
 
-  return redirect(`/users`);
+  return redirect(`/login`);
 };
 
 export default function Index() {
-  const users = useLoaderData<User[]>();
-
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Users</h1>
+      <h1>Crie aqui agora mesmo a sua nova conta para você estar usando esse maravilhoso sistema de feed</h1>
       <Form method="post">
         <input name="name" placeholder="Nome" required minLength={5} />
         <input name="email" placeholder="E-mail" required minLength={5} type="email" />
         <input name="password" placeholder="Senha" required minLength={5} type="password" />
         <button type="submit">Sign up</button>
       </Form>
-      <ul>
-        {users.map(user => (
-          <li>
-            <Link to={`/user/${user.id}`}>{user.name}</Link>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Tenant } from "@prisma/client";
 import { ActionFunction, DataFunctionArgs, json, LoaderFunction, redirect } from "@remix-run/cloudflare";
 import { Form, Link, useLoaderData } from "@remix-run/react";
+import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { commitSession, getSession } from "~/services/session.server";
 
@@ -8,6 +9,10 @@ export const loader: LoaderFunction = async ({
   request,
   context,
 }: DataFunctionArgs) => {
+  await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
   await prisma.$connect();
   const tenants = await prisma.tenant.findMany();
   await prisma.$disconnect();
@@ -19,6 +24,10 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
+  await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
   const body = await request.formData();
   const { _action, ...values } = Object.fromEntries(body);
 

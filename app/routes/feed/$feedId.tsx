@@ -16,6 +16,10 @@ export const loader: LoaderFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
+  await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
   await prisma.$connect();
   const feed = await prisma.feed.findUnique({
     where: { id: params.feedId },

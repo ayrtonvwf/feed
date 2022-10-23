@@ -26,12 +26,14 @@ export const action: ActionFunction = async ({
 export default function Index() {
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Entrar</h1>
+      <h1>Faça aqui o seu login com o seu e-mail e a sua senha que você informou na hora da criação da sua nova conta nesse maravilhoso sistema de feed</h1>
       <Form method="post">
         <input name="email" placeholder="E-mail" required minLength={5} type="email" />
         <input name="password" placeholder="Senha" required minLength={5} type="password" />
         <button type="submit">Log in</button>
       </Form>
+      <h2>Esqueceu o seu e-mail ou a sua senha?</h2>
+      <span className="text-sm">problema seu</span>
     </div>
   );
 }
