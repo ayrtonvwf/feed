@@ -27,7 +27,8 @@ export const loader: LoaderFunction = async ({
     where: { id: params.feedId },
     include: {
       Post: {
-        include: { User: true, Comment: { include: { User: true } } },
+        include: { User: true, Comment: { include: { User: true }, orderBy: { createdAt: "asc" } } },
+        orderBy: { createdAt: "desc" },
       }
     },
   });
