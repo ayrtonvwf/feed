@@ -2,6 +2,7 @@ import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
 import { LoaderArgs, redirect } from "@remix-run/cloudflare";
 import { Form, useTransition } from "@remix-run/react";
 import { RefObject, useEffect, useRef, useState } from "react";
+import { useInView } from "react-intersection-observer";
 import {
   typedjson,
   TypedJsonResponse,
@@ -10,6 +11,7 @@ import {
 } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
+import { Spinner } from "~/components/block/spinner";
 import { MyLink } from "~/components/typography/link";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
@@ -102,6 +104,7 @@ export default function () {
   const { feed: initialFeed } = useTypedLoaderData<FeedLoaderData>();
   const [feed, setFeed] = useState(initialFeed);
 
+  const [shouldFetchMore, setShouldFetchMore] = useState(feed.Post.length > 0);
   const morePosts = useTypedFetcher<FeedLoaderData>();
 
   useEffect(() => {
@@ -116,6 +119,7 @@ export default function () {
       ...feed,
       Post: [...feed.Post, ...morePosts.data.feed.Post],
     });
+    setShouldFetchMore(morePosts.data.feed.Post.length > 0);
   }, [morePosts.data]);
 
   const transition = useTransition();
@@ -146,6 +150,18 @@ export default function () {
       commentFormsRef.current?.[isCommentingOnPostId].reset();
     }
   }, [isCommentingOnPostId]);
+
+  const endOfFeedInView = useInView();
+
+  useEffect(() => {
+    if (!endOfFeedInView.inView || !shouldFetchMore) {
+      return;
+    }
+    morePosts.submit(
+      { feedId: feed.id, after: feed.Post[feed.Post.length - 1].id },
+      { method: "get", action: "/feed/load-more" }
+    );
+  }, [endOfFeedInView.inView]);
 
   return (
     <main className="container mx-auto">
@@ -231,20 +247,13 @@ export default function () {
           </div>
         </Panel>
       ))}
-      <morePosts.Form method="get" action="/feed/load-more">
-        <input type="hidden" name="feedId" value={feed.id} />
-        <input
-          type="hidden"
-          name="after"
-          value={feed.Post[feed.Post.length - 1].id}
-        />
-        <button
-          type="submit"
-          className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-        >
-          {morePosts.state === "submitting" ? "Carregando..." : "Mais posts"}
-        </button>
-      </morePosts.Form>
+      <div
+        ref={endOfFeedInView.ref}
+        className="flex justify-center items-center py-10"
+      >
+        {morePosts.state === "submitting" && <Spinner />}
+        {!shouldFetchMore && <p>Não há mais posts para carregar.</p>}
+      </div>
     </main>
   );
 }
