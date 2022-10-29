@@ -4,14 +4,14 @@ import type {
   DataFunctionArgs,
   ActionFunction,
 } from "@remix-run/cloudflare";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useLoaderData, useTransition } from "@remix-run/react";
 import { prisma } from "~/services/prisma.server";
 import { Comment, Post, User } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { authenticator } from "~/services/auth.server";
-import { MyReactions } from "~/components/feed/reactions";
 import { MyH1 } from "~/components/typography/title";
 import { Panel } from "~/components/block/panel";
+import { RefObject, useEffect, useRef } from "react";
 
 export const loader: LoaderFunction = async ({
   request,
@@ -81,12 +81,32 @@ export const action: ActionFunction = async ({
 
 export default function () {
   const feed = useLoaderData();
+  const transition = useTransition();
+
+  const isPosting = transition.state === "submitting" && transition.submission.formData.get('_action') === "post";
+  const formRef = useRef() as RefObject<HTMLFormElement>;
+  useEffect(() => {
+    if (!isPosting) {
+      formRef.current?.reset();
+    }
+  }, [isPosting]);
+
+  const isCommentingOnPostId = transition.state === "submitting" && transition.submission.formData.get('_action') === "comment" ? transition.submission.formData.get('postId')?.toString() : null;
+  const commentFormsRef = useRef({}) as RefObject<Record<string, HTMLFormElement>>;
+  /**
+   * @see https://aparnajoshi.netlify.app/reactjs-multiple-refs-for-handling-form-elements#useref-for-handling-a-multiple-input-element
+   */
+  useEffect(() => {
+    if (isCommentingOnPostId) {
+      commentFormsRef.current?.[isCommentingOnPostId].reset();
+    }
+  }, [isCommentingOnPostId]);
 
   return (
     <main className="container mx-auto">
       <MyH1>{feed.title}</MyH1>
       <Panel>
-        <Form method="post">
+        <Form method="post" ref={formRef}>
           <fieldset className="gap-2 flex flex-col">
             <h2 className="text-lg font-semibold">Novo post</h2>
             <input name="title" placeholder="Título" required minLength={5} className="block rounded-lg w-full bg-gray-200 p-2" />
@@ -107,7 +127,7 @@ export default function () {
           </div>
           <hr />
           <div className="gap-2 flex flex-col">
-            <Form method="post" className="gap-2 flex flex-col">
+            <Form method="post" className="gap-2 flex flex-col" ref={(el) => el && commentFormsRef.current ? (commentFormsRef.current[post.id] = el) : null}>
               <input type="hidden" name="postId" value={post.id} />
               <textarea placeholder="Comentário" className="block rounded-lg w-full bg-gray-200 p-2" name="description" required minLength={5}></textarea>
               <button type="submit" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md" name="_action" value="comment">Comentar</button>
