@@ -1,6 +1,7 @@
 import { User } from "@prisma/client";
 import { ActionFunction, DataFunctionArgs, json, LoaderFunction, redirect } from "@remix-run/cloudflare";
 import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Panel } from "~/components/block/panel";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { hash } from "~/services/hash.server";
@@ -49,12 +50,16 @@ export default function Index() {
   return (
     <main className="container mx-auto">
       <MyH1>Crie aqui agora mesmo a sua nova conta para você estar usando esse maravilhoso sistema de feed</MyH1>
-      <Form method="post">
-        <input name="name" placeholder="Nome" required minLength={5} />
-        <input name="email" placeholder="E-mail" required minLength={5} type="email" />
-        <input name="password" placeholder="Senha" required minLength={5} type="password" />
-        <button type="submit">Sign up</button>
-      </Form>
+      <Panel>
+        <Form method="post">
+          <fieldset className="gap-2 flex flex-col">
+            <input name="name" placeholder="Nome" required minLength={5}  className="block rounded-lg w-full bg-gray-200 p-2" />
+            <input name="email" placeholder="E-mail" required minLength={5} type="email"  className="block rounded-lg w-full bg-gray-200 p-2" />
+            <input name="password" placeholder="Senha" required minLength={5} type="password"  className="block rounded-lg w-full bg-gray-200 p-2" />
+            <button type="submit" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md">Sign up</button>
+          </fieldset>
+        </Form>
+      </Panel>
     </main>
   );
 }

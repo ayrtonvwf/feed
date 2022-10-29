@@ -10,7 +10,8 @@ import { Feed, Post, Tenant } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { TypedResponse } from "@remix-run/react/dist/components";
 import { authenticator } from "~/services/auth.server";
-import { MyH1 } from "~/components/typography/title";
+import { MyH1, MyH2 } from "~/components/typography/title";
+import { Panel } from "~/components/block/panel";
 
 type LoaderData = {
   feeds: Feed[];
@@ -95,16 +96,23 @@ export default function () {
   return (
     <main className="container mx-auto">
       <MyH1>{tenant.name}</MyH1>
-      <Form method="post">
-        <h2>Criar feed</h2>
-        <input name="title" placeholder="Título" required minLength={5}/>
-        <button type="submit" name="_action" value="createFeed">Criar</button>
-      </Form>
-      {feeds.map((feed) => <>
-        <div>
-          <h3>{feed.title}</h3>
-        </div>
-      </>)}
+      <Panel>
+        <Form method="post">
+          <fieldset className="gap-2 flex flex-col">
+            <MyH2>Criar feed</MyH2>
+            <input name="title" placeholder="Título" required minLength={5} className="block rounded-lg w-full bg-gray-200 p-2" />
+            <button type="submit" name="_action" value="createFeed" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md">Criar</button>
+          </fieldset>
+        </Form>
+      </Panel>
+      <Panel>
+        <MyH2>Feeds existentes</MyH2>
+        {feeds.map((feed) => <>
+          <div>
+            <h3>{feed.title}</h3>
+          </div>
+        </>)}
+      </Panel>
     </main>
   );
 }
