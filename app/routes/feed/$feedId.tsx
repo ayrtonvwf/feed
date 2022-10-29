@@ -152,27 +152,27 @@ export default function () {
       <MyH1>{feed.title}</MyH1>
       <Panel>
         <Form method="post" ref={formRef}>
-          <fieldset className="gap-2 flex flex-col">
+          <fieldset className="flex flex-col gap-2">
             <h2 className="text-lg font-semibold">Novo post</h2>
             <input
               name="title"
               placeholder="Título"
               required
               minLength={5}
-              className="block rounded-lg w-full bg-gray-200 p-2"
+              className="block w-full rounded-lg bg-gray-200 p-2"
             />
             <textarea
               name="description"
               placeholder="Descrição"
               required
               minLength={5}
-              className="block rounded-lg w-full bg-gray-200 p-2"
+              className="block w-full rounded-lg bg-gray-200 p-2"
             ></textarea>
             <button
               type="submit"
               name="_action"
               value="post"
-              className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md"
+              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
             >
               Post it
             </button>
@@ -181,7 +181,7 @@ export default function () {
       </Panel>
       {feed.Post.map((post) => (
         <Panel key={post.id}>
-          <div className="gap-2 flex flex-col mb-5">
+          <div className="mb-5 flex flex-col gap-2">
             <div>
               <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink>
               <span>{post.createdAt.toLocaleString()}</span>
@@ -190,10 +190,10 @@ export default function () {
             <p>{post.description}</p>
           </div>
           <hr />
-          <div className="gap-2 flex flex-col">
+          <div className="flex flex-col gap-2">
             <Form
               method="post"
-              className="gap-2 flex flex-col"
+              className="flex flex-col gap-2"
               ref={(el) =>
                 el && commentFormsRef.current
                   ? (commentFormsRef.current[post.id] = el)
@@ -203,14 +203,14 @@ export default function () {
               <input type="hidden" name="postId" value={post.id} />
               <textarea
                 placeholder="Comentário"
-                className="block rounded-lg w-full bg-gray-200 p-2"
+                className="block w-full rounded-lg bg-gray-200 p-2"
                 name="description"
                 required
                 minLength={5}
               ></textarea>
               <button
                 type="submit"
-                className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md"
+                className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
                 name="_action"
                 value="comment"
               >
@@ -218,7 +218,7 @@ export default function () {
               </button>
             </Form>
             {post.Comment.map((comment) => (
-              <div className="gap-2 flex flex-col" key={comment.id}>
+              <div className="flex flex-col gap-2" key={comment.id}>
                 <div>
                   <MyLink to={`/user/${comment.User.id}`}>
                     {comment.User.name}
@@ -240,7 +240,7 @@ export default function () {
         />
         <button
           type="submit"
-          className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md"
+          className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
         >
           {morePosts.state === "submitting" ? "Carregando..." : "Mais posts"}
         </button>

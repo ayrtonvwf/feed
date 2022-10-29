@@ -20,25 +20,25 @@ authenticator.use(
      */
     const email = form.get("email")?.toString();
     if (!email) {
-      throw 'No e-mail provided'
+      throw "No e-mail provided";
     }
     const password = form.get("password")?.toString();
     if (!password) {
-      throw 'No password provided'
+      throw "No password provided";
     }
 
     await prisma.$connect();
-    const user = await prisma.user.findFirst({ where: { email }});
+    const user = await prisma.user.findFirst({ where: { email } });
     await prisma.$disconnect();
     if (!user) {
-      throw 'User not found';
+      throw "User not found";
     }
     if (!user.passwordHash) {
-      throw 'No password defined';
+      throw "No password defined";
     }
     const verified = await verify({ password, hash: user.passwordHash });
     if (!verified) {
-      throw 'Invalid password';
+      throw "Invalid password";
     }
     return user;
   }),

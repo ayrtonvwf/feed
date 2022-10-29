@@ -1,4 +1,8 @@
-import { ActionFunction, DataFunctionArgs, LoaderArgs } from "@remix-run/cloudflare";
+import {
+  ActionFunction,
+  DataFunctionArgs,
+  LoaderArgs,
+} from "@remix-run/cloudflare";
 import { Form } from "@remix-run/react";
 import { Panel } from "~/components/block/panel";
 import { MyH1 } from "~/components/typography/title";
@@ -12,7 +16,7 @@ export async function loader({ request }: LoaderArgs) {
   return await authenticator.isAuthenticated(request, {
     successRedirect: "/",
   });
-};
+}
 
 export const action: ActionFunction = async ({
   request,
@@ -28,13 +32,35 @@ export const action: ActionFunction = async ({
 export default function Index() {
   return (
     <main className="container mx-auto">
-      <MyH1>Faça aqui o seu login com o seu e-mail e a sua senha que você informou na hora da criação da sua nova conta nesse maravilhoso sistema de feed</MyH1>
+      <MyH1>
+        Faça aqui o seu login com o seu e-mail e a sua senha que você informou
+        na hora da criação da sua nova conta nesse maravilhoso sistema de feed
+      </MyH1>
       <Panel>
         <Form method="post">
-          <fieldset className="gap-2 flex flex-col">
-            <input name="email" placeholder="E-mail" required minLength={5} type="email" className="block rounded-lg w-full bg-gray-200 p-2" />
-            <input name="password" placeholder="Senha" required minLength={5} type="password" className="block rounded-lg w-full bg-gray-200 p-2" />
-            <button type="submit" className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md">Log in</button>
+          <fieldset className="flex flex-col gap-2">
+            <input
+              name="email"
+              placeholder="E-mail"
+              required
+              minLength={5}
+              type="email"
+              className="block w-full rounded-lg bg-gray-200 p-2"
+            />
+            <input
+              name="password"
+              placeholder="Senha"
+              required
+              minLength={5}
+              type="password"
+              className="block w-full rounded-lg bg-gray-200 p-2"
+            />
+            <button
+              type="submit"
+              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
+            >
+              Log in
+            </button>
           </fieldset>
         </Form>
         <h2>Esqueceu o seu e-mail ou a sua senha?</h2>

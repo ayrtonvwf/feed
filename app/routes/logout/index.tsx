@@ -1,4 +1,8 @@
-import { ActionFunction, DataFunctionArgs, LoaderArgs } from "@remix-run/cloudflare";
+import {
+  ActionFunction,
+  DataFunctionArgs,
+  LoaderArgs,
+} from "@remix-run/cloudflare";
 import { Form } from "@remix-run/react";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
@@ -11,7 +15,7 @@ export async function loader({ request }: LoaderArgs) {
   return await authenticator.isAuthenticated(request, {
     failureRedirect: "/",
   });
-};
+}
 
 export const action: ActionFunction = async ({
   request,

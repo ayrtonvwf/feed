@@ -132,7 +132,7 @@ const TabButton: React.FC<
    * @todo pass props to button with spread operator
    */
   <button
-    className={`block px-4 py-2 text-blue-600 rounded-t-lg w-1/2 border-b-4 border-solid ${
+    className={`block w-1/2 rounded-t-lg border-b-4 border-solid px-4 py-2 text-blue-600 ${
       props.active
         ? "border-sky-500 bg-sky-100"
         : "border-slate-200 bg-slate-100"
