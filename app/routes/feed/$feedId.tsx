@@ -251,8 +251,11 @@ export default function () {
         ref={endOfFeedInView.ref}
         className="flex justify-center items-center py-10"
       >
-        {morePosts.state === "submitting" && <Spinner />}
-        {!shouldFetchMore && <p>Não há mais posts para carregar.</p>}
+        {shouldFetchMore ? (
+          <Spinner />
+        ) : (
+          <p>Não há mais posts para carregar.</p>
+        )}
       </div>
     </main>
   );
