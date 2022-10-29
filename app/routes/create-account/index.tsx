@@ -1,12 +1,10 @@
-import { User } from "@prisma/client";
 import {
   ActionFunction,
   DataFunctionArgs,
-  json,
   LoaderFunction,
   redirect,
 } from "@remix-run/cloudflare";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Form } from "@remix-run/react";
 import { Panel } from "~/components/block/panel";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
