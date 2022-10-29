@@ -1,32 +1,34 @@
+import { Feed, Tenant, User } from "@prisma/client";
 import {
   ActionFunction,
+  DataFunctionArgs,
   LinksFunction,
   LoaderArgs,
+  LoaderFunction,
   MetaFunction,
   redirect,
 } from "@remix-run/cloudflare";
 import {
+  Form,
   Links,
   LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useSubmit,
+  useTransition,
 } from "@remix-run/react";
-import { Feed, Tenant, User } from "@prisma/client";
-import { DataFunctionArgs, json, LoaderFunction } from "@remix-run/cloudflare";
-import { useLoaderData, useSubmit, Form } from "@remix-run/react";
-import { prisma } from "~/services/prisma.server";
-import { commitSession, getSession } from "~/services/session.server";
-import { authenticator } from "./services/auth.server";
-import { MyNavLink } from "./components/header/link";
-import styles from "./styles/app.css";
-import { useTransition } from "@remix-run/react";
 import {
   typedjson,
   TypedJsonResponse,
   useTypedLoaderData,
 } from "remix-typedjson";
+import { prisma } from "~/services/prisma.server";
+import { commitSession, getSession } from "~/services/session.server";
+import { MyNavLink } from "./components/header/link";
+import { authenticator } from "./services/auth.server";
+import styles from "./styles/app.css";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 

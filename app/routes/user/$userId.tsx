@@ -1,28 +1,23 @@
+import { Comment, Feed, Post, Tenant, TenantUser, User } from "@prisma/client";
+import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
 import {
   ErrorBoundaryComponent,
-  json,
   LoaderArgs,
   redirect,
 } from "@remix-run/cloudflare";
-import type {
-  LoaderFunction,
-  DataFunctionArgs,
-  ActionFunction,
-} from "@remix-run/cloudflare";
-import { Form, useLoaderData } from "@remix-run/react";
-import { prisma } from "~/services/prisma.server";
-import { Comment, Feed, Post, Tenant, TenantUser, User } from "@prisma/client";
-import invariant from "tiny-invariant";
-import { authenticator } from "~/services/auth.server";
-import { MyH1, MyH2, MyH3 } from "~/components/typography/title";
-import { Panel } from "~/components/block/panel";
+import { Form } from "@remix-run/react";
 import { useState } from "react";
-import { ulid } from "~/services/uild.server";
 import {
   typedjson,
   TypedJsonResponse,
   useTypedLoaderData,
 } from "remix-typedjson";
+import invariant from "tiny-invariant";
+import { Panel } from "~/components/block/panel";
+import { MyH1, MyH2, MyH3 } from "~/components/typography/title";
+import { authenticator } from "~/services/auth.server";
+import { prisma } from "~/services/prisma.server";
+import { ulid } from "~/services/uild.server";
 
 type UserWithDetails = User & {
   TenantUser: (TenantUser & { Tenant: Tenant })[];

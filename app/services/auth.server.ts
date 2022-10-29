@@ -1,9 +1,9 @@
 import { User } from "@prisma/client";
 import { Authenticator } from "remix-auth";
-import { sessionStorage } from "~/services/session.server";
 import { FormStrategy } from "remix-auth-form";
-import { prisma } from "./prisma.server";
+import { sessionStorage } from "~/services/session.server";
 import { verify } from "./hash.server";
+import { prisma } from "./prisma.server";
 
 /**
  * @see https://github.com/sergiodxa/remix-auth
