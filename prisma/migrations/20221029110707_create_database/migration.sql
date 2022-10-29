@@ -9,7 +9,7 @@ CREATE TYPE "Reaction" AS ENUM ('LIKE', 'HAHA', 'WOW', 'LOVE', 'ANGRY', 'SAD');
 
 -- CreateTable
 CREATE TABLE "Tenant" (
-    "id" UUID NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -19,9 +19,10 @@ CREATE TABLE "Tenant" (
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" UUID NOT NULL,
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "passwordHash" TEXT,
     "status" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "type" "UserType" NOT NULL DEFAULT 'NORMAL',
@@ -31,9 +32,9 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "TenantUser" (
-    "id" UUID NOT NULL,
-    "tenantId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "tenantId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "type" "TenantUserType" NOT NULL DEFAULT 'NORMAL',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -42,9 +43,9 @@ CREATE TABLE "TenantUser" (
 
 -- CreateTable
 CREATE TABLE "Feed" (
-    "id" UUID NOT NULL,
+    "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
-    "tenantId" UUID NOT NULL,
+    "tenantId" TEXT NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -53,9 +54,9 @@ CREATE TABLE "Feed" (
 
 -- CreateTable
 CREATE TABLE "Post" (
-    "id" UUID NOT NULL,
-    "feedId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "feedId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
@@ -66,9 +67,9 @@ CREATE TABLE "Post" (
 
 -- CreateTable
 CREATE TABLE "PostReaction" (
-    "id" UUID NOT NULL,
-    "postId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "reaction" "Reaction" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -77,9 +78,9 @@ CREATE TABLE "PostReaction" (
 
 -- CreateTable
 CREATE TABLE "PostModerationRequest" (
-    "id" UUID NOT NULL,
-    "postId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "PostModerationRequest_pkey" PRIMARY KEY ("id")
@@ -87,10 +88,11 @@ CREATE TABLE "PostModerationRequest" (
 
 -- CreateTable
 CREATE TABLE "Comment" (
-    "id" UUID NOT NULL,
-    "postId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
+    "description" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Comment_pkey" PRIMARY KEY ("id")
@@ -98,9 +100,9 @@ CREATE TABLE "Comment" (
 
 -- CreateTable
 CREATE TABLE "CommentModerationRequest" (
-    "id" UUID NOT NULL,
-    "commentId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "commentId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "CommentModerationRequest_pkey" PRIMARY KEY ("id")
@@ -108,9 +110,9 @@ CREATE TABLE "CommentModerationRequest" (
 
 -- CreateTable
 CREATE TABLE "CommentReaction" (
-    "id" UUID NOT NULL,
-    "commentId" UUID NOT NULL,
-    "userId" UUID NOT NULL,
+    "id" TEXT NOT NULL,
+    "commentId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "reaction" "Reaction" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
