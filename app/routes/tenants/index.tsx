@@ -109,20 +109,20 @@ export default function Index() {
       <MyH1>Tenants</MyH1>
       <Panel>
         <Form method="post" ref={formRef}>
-          <fieldset className="gap-2 flex flex-col">
+          <fieldset className="flex flex-col gap-2">
             <MyH2>Criar tenant</MyH2>
             <input
               name="name"
               placeholder="Nome"
               required
               minLength={5}
-              className="block rounded-lg w-full bg-gray-200 p-2"
+              className="block w-full rounded-lg bg-gray-200 p-2"
             />
             <button
               type="submit"
               name="_action"
               value="create"
-              className="block ml-auto bg-sky-500 text-white py-2 px-5 rounded-md"
+              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
             >
               Create
             </button>

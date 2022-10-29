@@ -125,9 +125,9 @@ export default function App() {
         <Links />
       </head>
       <body className="bg-slate-200">
-        <header className="bg-white shadow sticky top-0 pt-2">
+        <header className="sticky top-0 bg-white pt-2 shadow">
           <div className="container mx-auto">
-            <nav className="flex items-center flex-wrap">
+            <nav className="flex flex-wrap items-center">
               <MyNavLink to="/">Home</MyNavLink>
               {user && (
                 <>
@@ -165,13 +165,13 @@ export default function App() {
               )}
             </nav>
             {user && (
-              <ul className="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200">
+              <ul className="flex flex-wrap border-b border-gray-200 text-center text-sm font-medium text-gray-500">
                 {feeds.map((feed) => (
                   <li className="mr-2" key={feed.id}>
                     <MyNavLink
                       to={`/feed/${feed.id}`}
                       key={feed.id}
-                      className="inline-block px-4 py-2 text-blue-600 bg-gray-100 rounded-t-lg"
+                      className="inline-block rounded-t-lg bg-gray-100 px-4 py-2 text-blue-600"
                     >
                       {feed.title}
                     </MyNavLink>
@@ -183,12 +183,12 @@ export default function App() {
         </header>
         <Outlet />
         <div
-          className={`inset-0 bg-white/50 fixed items-center justify-center ${
+          className={`fixed inset-0 items-center justify-center bg-white/50 ${
             transition.state === "idle" ? "hidden" : "flex"
           }`}
         >
           <svg
-            className="animate-spin -ml-1 mr-3 h-10 w-10 text-sky-500"
+            className="-ml-1 mr-3 h-10 w-10 animate-spin text-sky-500"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"

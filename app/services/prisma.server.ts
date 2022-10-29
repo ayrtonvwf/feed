@@ -4,7 +4,8 @@
 
 import { PrismaClient } from "@prisma/client/edge";
 
-const DATABASE_URL = 'prisma://aws-us-east-1.prisma-data.com/?api_key=AJunWDUXCpIwj3Q-Y2_MSmVEB7ubWdSIo9PK-aXRoF3lhSG82F606EoZ_NFmUrSt';
+const DATABASE_URL =
+  "prisma://aws-us-east-1.prisma-data.com/?api_key=AJunWDUXCpIwj3Q-Y2_MSmVEB7ubWdSIo9PK-aXRoF3lhSG82F606EoZ_NFmUrSt";
 
 let prisma: PrismaClient;
 
@@ -17,22 +18,23 @@ declare global {
 // create a new connection to the DB with every change either.
 // in production we'll have a single connection to the DB.
 if (process.env.NODE_ENV === "production") {
-  prisma = new PrismaClient({ 
-  datasources: {
-    db: {
-      // url: env.DATABASE_URL
-      url: DATABASE_URL
-    }
-  } });
+  prisma = new PrismaClient({
+    datasources: {
+      db: {
+        // url: env.DATABASE_URL
+        url: DATABASE_URL,
+      },
+    },
+  });
 } else {
   if (!global.__db__) {
-    global.__db__ = new PrismaClient({ 
+    global.__db__ = new PrismaClient({
       datasources: {
         db: {
           // url: env.DATABASE_URL,
-          url: DATABASE_URL
-        }
-      }
+          url: DATABASE_URL,
+        },
+      },
     });
   }
   prisma = global.__db__;
