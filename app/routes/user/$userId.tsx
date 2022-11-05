@@ -1,4 +1,4 @@
-import { Comment, Feed, Post, Tenant, TenantUser, User } from "@prisma/client";
+import { Tenant, TenantUser, User } from "@prisma/client";
 import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
 import {
   ErrorBoundaryComponent,
@@ -14,15 +14,24 @@ import {
 } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
+import {
+  StandaloneComment,
+  StandaloneCommentType,
+} from "~/components/feed/standalone-comment";
+import {
+  StandalonePost,
+  StandalonePostType,
+} from "~/components/feed/standalone-post";
 import { MyH1, MyH2, MyH3 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { getSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
 
 type UserWithDetails = User & {
   TenantUser: (TenantUser & { Tenant: Tenant })[];
-  Post: (Post & { Feed: Feed })[];
-  Comment: (Comment & { Post: Post & { Feed: Feed } })[];
+  Post: StandalonePostType[];
+  Comment: StandaloneCommentType[];
 };
 
 type LoaderData = {
@@ -40,6 +49,9 @@ export const loader = async ({
     failureRedirect: "/login",
   });
 
+  const session = await getSession(request.headers.get("cookie"));
+  const tenantId = session.get("tenantId")?.toString() || "";
+
   invariant(params.userId, `params.userId is required`);
 
   await prisma.$connect();
@@ -48,8 +60,17 @@ export const loader = async ({
       where: { id: params.userId },
       include: {
         TenantUser: { include: { Tenant: true } },
-        Post: { include: { Feed: true } },
-        Comment: { include: { Post: { include: { Feed: true } } } },
+        Post: {
+          include: { Feed: true, User: true },
+          where: { Feed: { tenantId } },
+        },
+        Comment: {
+          include: {
+            Post: { include: { Feed: true, User: true } },
+            User: true,
+          },
+          where: { Post: { Feed: { tenantId } } },
+        },
       },
     }),
     prisma.tenant.findMany({
@@ -194,22 +215,15 @@ export default function () {
         </header>
         <div className={activeTab === "posts" ? "block" : "hidden"}>
           <MyH2>Posts</MyH2>
-          <ul>
-            {user.Post.map((post) => (
-              <li key={post.id}>
-                {post.Feed.title} - {post.title}
-              </li>
-            ))}
-          </ul>
+          {user.Post.map((post) => (
+            <StandalonePost post={post} />
+          ))}
         </div>
         <div className={activeTab === "comments" ? "block" : "hidden"}>
           <MyH2>Comments</MyH2>
           <ul>
             {user.Comment.map((comment) => (
-              <li key={comment.id}>
-                {comment.Post.Feed.title} - {comment.Post.title} -{" "}
-                {comment.description}
-              </li>
+              <StandaloneComment comment={comment} />
             ))}
           </ul>
         </div>
