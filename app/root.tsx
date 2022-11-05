@@ -16,6 +16,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useMatches,
   useSubmit,
   useTransition,
 } from "@remix-run/react";
@@ -116,6 +117,8 @@ export default function App() {
   const transition = useTransition();
   const { feeds, tenantId, user, tenants } = useTypedLoaderData<LoaderData>();
   const submit = useSubmit();
+  const matches = useMatches();
+  const isAdminRoute = matches[1]?.id === "routes/admin";
 
   const onChangeTenant = (event: any) =>
     submit(event.currentTarget, { replace: true });
@@ -132,14 +135,11 @@ export default function App() {
           <div className="container mx-auto">
             <nav className="flex flex-wrap items-center">
               <MyNavLink to="/">Home</MyNavLink>
+              {user?.type === "SUPERADMIN" && (
+                <MyNavLink to="/admin">Admin</MyNavLink>
+              )}
               {user && (
                 <>
-                  {user.type === "SUPERADMIN" && (
-                    <>
-                      <MyNavLink to="/tenants">Tenants</MyNavLink>
-                      <MyNavLink to="/users">Usuários</MyNavLink>
-                    </>
-                  )}
                   <div className="ml-auto">
                     <Form
                       onChange={onChangeTenant}
@@ -167,7 +167,7 @@ export default function App() {
                 </>
               )}
             </nav>
-            {user && (
+            {user && !isAdminRoute && (
               <ul className="flex flex-wrap border-b border-gray-200 text-center text-sm font-medium text-gray-500">
                 {feeds.map((feed) => (
                   <li className="mr-2" key={feed.id}>
