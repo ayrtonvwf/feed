@@ -26,9 +26,6 @@ export const loader = async ({
     failureRedirect: "/login",
   });
 
-  /**
-   * @todo load only the users of the current tenant
-   */
   if (!user || user.type !== "SUPERADMIN") {
     return redirect("/");
   }
