@@ -85,7 +85,7 @@ export const action: ActionFunction = async ({
     });
     await prisma.$disconnect();
 
-    return redirect(`/tenants`);
+    return redirect(`/admin/tenants`);
   }
 };
 
@@ -134,7 +134,7 @@ export default function Index() {
           {tenants.map((tenant) => (
             <li key={tenant.id} className="flex py-1">
               <div>
-                <MyLink to={`/tenant/${tenant.id}`}>{tenant.name}</MyLink>
+                <MyLink to={`/admin/tenant/${tenant.id}`}>{tenant.name}</MyLink>
               </div>
               <div className="ml-2">
                 ({tenant._count.Feed} feeds, {tenant._count.TenantUser} users)
