@@ -1,21 +1,22 @@
-import { Tenant, TenantUser, User } from "@prisma/client";
+import { TenantUser, User } from "@prisma/client";
 import { LoaderArgs } from "@remix-run/cloudflare";
-import { Form } from "@remix-run/react";
+import { Outlet } from "@remix-run/react";
 import {
   redirect,
   typedjson,
   TypedJsonResponse,
   useTypedLoaderData,
 } from "remix-typedjson";
+import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
 import { MyLink } from "~/components/typography/link";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { getSession } from "~/services/session.server";
 
 type LoaderData = {
-  users: (User & { TenantUser: TenantUser[] })[];
-  tenants: Tenant[];
+  tenantUsers: (TenantUser & { User: User })[];
 };
 
 export const loader = async ({
@@ -26,45 +27,54 @@ export const loader = async ({
     failureRedirect: "/login",
   });
 
-  /**
-   * @todo load only the users of the current tenant
-   */
-  if (!user || user.type !== "SUPERADMIN") {
+  const session = await getSession(request.headers.get("cookie"));
+  const tenantId = session.get("tenantId");
+  invariant(
+    typeof tenantId === "string",
+    `session.tenantId should be a string`
+  );
+
+  await prisma.$connect();
+
+  const tenantUser = await prisma.tenantUser.findFirst({
+    where: { tenantId, userId: user.id },
+  });
+
+  if (user.type !== "SUPERADMIN" && tenantUser?.type !== "MANAGER") {
+    await prisma.$disconnect();
     return redirect("/");
   }
 
-  await prisma.$connect();
-  const [users, tenants] = await Promise.all([
-    prisma.user.findMany({
-      include: { TenantUser: true },
-    }),
-    prisma.tenant.findMany(),
-  ]);
+  const tenantUsers = await prisma.tenantUser.findMany({
+    include: { User: true },
+    where: { tenantId },
+  });
   await prisma.$disconnect();
-  return typedjson({ users, tenants });
+
+  return typedjson({ tenantUsers });
 };
 
 export default function Index() {
-  const { users } = useTypedLoaderData<LoaderData>();
+  const { tenantUsers } = useTypedLoaderData<LoaderData>();
 
   return (
     <main className="container mx-auto">
       <Panel>
         <MyH1>Users</MyH1>
         <ul>
-          {users.map((user) => (
+          {tenantUsers.map((tenantUser) => (
             <li>
-              <MyLink to={`/user/${user.id}`}>{user.name}</MyLink>
-              <Form method="post" style={{ display: "inline" }}>
-                <input type="hidden" name="userId" value={user.id} />
-                <button type="submit" name="_action" value="delete">
-                  Delete
-                </button>
-              </Form>
+              <MyLink to={`/user/${tenantUser.User.id}`}>
+                {tenantUser.User.name}
+              </MyLink>
+              <MyLink to={`/users/${tenantUser.User.id}/remove`}>
+                Remover
+              </MyLink>
             </li>
           ))}
         </ul>
       </Panel>
+      <Outlet />
     </main>
   );
 }
