@@ -1,10 +1,9 @@
-import { Feed, Tenant, User } from "@prisma/client";
+import { Feed, Tenant, TenantUser, User } from "@prisma/client";
 import {
   ActionFunction,
   DataFunctionArgs,
   LinksFunction,
   LoaderArgs,
-  LoaderFunction,
   MetaFunction,
   redirect,
 } from "@remix-run/cloudflare";
@@ -45,9 +44,10 @@ type LoaderData = {
   user: User | null;
   tenantId: string | null;
   tenants: Tenant[];
+  tenantUser: TenantUser | null;
 };
 
-export const loader: LoaderFunction = async ({
+export const loader = async ({
   request,
   context,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
@@ -55,7 +55,13 @@ export const loader: LoaderFunction = async ({
   const user = await authenticator.isAuthenticated(request);
 
   if (!user) {
-    return typedjson({ feeds: [], user, tenantId: null, tenants: [] });
+    return typedjson({
+      feeds: [],
+      user,
+      tenantId: null,
+      tenants: [],
+      tenantUser: null,
+    });
   }
 
   await prisma.$connect();
@@ -77,13 +83,16 @@ export const loader: LoaderFunction = async ({
     session.set("tenantId", tenantId);
   }
 
-  const feeds = tenantId
-    ? await prisma.feed.findMany({ where: { tenantId } })
-    : [];
+  const [feeds, tenantUser] = tenantId
+    ? await Promise.all([
+        prisma.feed.findMany({ where: { tenantId } }),
+        prisma.tenantUser.findFirst({ where: { tenantId, userId: user.id } }),
+      ])
+    : [[], null];
   await prisma.$disconnect();
 
   return typedjson(
-    { feeds, user, tenantId, tenants },
+    { feeds, user, tenantId, tenants, tenantUser },
     shouldSetTenantId
       ? {
           headers: {
@@ -115,7 +124,8 @@ export const action: ActionFunction = async ({
 
 export default function App() {
   const transition = useTransition();
-  const { feeds, tenantId, user, tenants } = useTypedLoaderData<LoaderData>();
+  const { feeds, tenantId, user, tenants, tenantUser } =
+    useTypedLoaderData<LoaderData>();
   const submit = useSubmit();
   const matches = useMatches();
   const isAdminRoute = matches[1]?.id === "routes/admin";
@@ -137,6 +147,10 @@ export default function App() {
               <MyNavLink to="/">Home</MyNavLink>
               {user?.type === "SUPERADMIN" && (
                 <MyNavLink to="/admin">Admin</MyNavLink>
+              )}
+              {(user?.type === "SUPERADMIN" ||
+                tenantUser?.type === "MANAGER") && (
+                <MyNavLink to={`/feeds`}>Feeds</MyNavLink>
               )}
               {user && (
                 <>

@@ -28,6 +28,11 @@ export const loader = async ({
     failureRedirect: "/login",
   });
 
+  invariant(
+    typeof params.feedId === "string",
+    `params.feedId should be a string`
+  );
+
   await prisma.$connect();
   const feed = await prisma.feed.findUnique({
     where: { id: params.feedId },
@@ -56,13 +61,14 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  invariant(params.feedId, `params.feedId is required`);
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
 
-  const user = await authenticator.isAuthenticated(request);
-
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
+  invariant(
+    typeof params.feedId === "string",
+    `params.feedId should be a string`
+  );
 
   const body = await request.formData();
   const { _action, ...values } = Object.fromEntries(body);
@@ -158,10 +164,16 @@ export default function () {
       return;
     }
     morePosts.submit(
-      { feedId: feed.id, after: feed.Post[feed.Post.length - 1].id },
-      { method: "get", action: "/feed/load-more" }
+      { after: feed.Post[feed.Post.length - 1].id },
+      { method: "get", action: `/feed/${feed.id}/load-posts` }
     );
   }, [endOfFeedInView.inView]);
+
+  useEffect(() => {
+    if (feed?.id !== initialFeed?.id) {
+      setFeed(initialFeed);
+    }
+  }, [initialFeed]);
 
   return (
     <main className="container mx-auto">

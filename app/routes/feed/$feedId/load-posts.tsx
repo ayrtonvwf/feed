@@ -1,8 +1,9 @@
 import { LoaderArgs } from "@remix-run/cloudflare";
 import { typedjson, TypedJsonResponse } from "remix-typedjson";
+import invariant from "tiny-invariant";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { FeedLoaderData } from "./types";
+import { FeedLoaderData } from "../types";
 
 export const loader = async ({
   request,
@@ -13,16 +14,20 @@ export const loader = async ({
     failureRedirect: "/login",
   });
 
+  invariant(
+    typeof params.feedId === "string",
+    `params.feedId should be a string`
+  );
+
   const url = new URL(request.url);
   const after = url.searchParams.get("after")?.toString();
-  const feedId = url.searchParams.get("feedId")?.toString();
 
   /**
    * @see https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination
    */
   await prisma.$connect();
   const feed = await prisma.feed.findUnique({
-    where: { id: feedId },
+    where: { id: params.feedId },
     include: {
       Post: {
         take: 2,
