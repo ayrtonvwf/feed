@@ -14,18 +14,12 @@ export const StandalonePost: React.FC<{ post: StandalonePostType }> = ({
     <div>
       <div className="flex gap-2">
         <div>
-          <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink>
-        </div>
-        <div>
-          (on <MyLink to={`/feed/${post.Feed.id}`}>{post.Feed.title}</MyLink>)
+          <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink> postou
+          em <MyLink to={`/feed/${post.Feed.id}`}>{post.Feed.title}</MyLink>
         </div>
         <div>|</div>
-        <div>
-          <DateTime>{post.createdAt}</DateTime>
-        </div>
-        <div>
-          <MyLink to={`/post/${post.id}`}>referência</MyLink>
-        </div>
+        <DateTime>{post.createdAt}</DateTime>
+        <MyLink to={`/post/${post.id}`}>#ref</MyLink>
       </div>
       <hr className="my-2" />
       <h3 className="font-bold">{post.title}</h3>
