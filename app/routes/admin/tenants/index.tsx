@@ -14,7 +14,6 @@ import {
   useTypedLoaderData,
 } from "remix-typedjson";
 import { Panel } from "~/components/block/panel";
-import { MyLink } from "~/components/typography/link";
 import { MyH1, MyH2 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
@@ -132,13 +131,9 @@ export default function Index() {
         <MyH2>Tenants existentes</MyH2>
         <ul>
           {tenants.map((tenant) => (
-            <li key={tenant.id} className="flex py-1">
-              <div>
-                <MyLink to={`/admin/tenant/${tenant.id}`}>{tenant.name}</MyLink>
-              </div>
-              <div className="ml-2">
-                ({tenant._count.Feed} feeds, {tenant._count.TenantUser} users)
-              </div>
+            <li key={tenant.id} className="py-1">
+              {tenant.name} ({tenant._count.Feed} feeds,{" "}
+              {tenant._count.TenantUser} users)
             </li>
           ))}
         </ul>
