@@ -1,11 +1,5 @@
-import { Tenant, TenantUser, User } from "@prisma/client";
-import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
-import {
-  ErrorBoundaryComponent,
-  LoaderArgs,
-  redirect,
-} from "@remix-run/cloudflare";
-import { Form } from "@remix-run/react";
+import { User } from "@prisma/client";
+import { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/cloudflare";
 import { useState } from "react";
 import {
   typedjson,
@@ -22,22 +16,18 @@ import {
   StandalonePost,
   StandalonePostType,
 } from "~/components/feed/standalone-post";
-import { MyH1, MyH2, MyH3 } from "~/components/typography/title";
+import { MyH1, MyH2 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { getSession } from "~/services/session.server";
-import { ulid } from "~/services/uild.server";
 
 type UserWithDetails = User & {
-  TenantUser: (TenantUser & { Tenant: Tenant })[];
   Post: StandalonePostType[];
   Comment: StandaloneCommentType[];
 };
 
 type LoaderData = {
-  currentUser: User;
   user: UserWithDetails;
-  tenantsWithoutUser: Tenant[];
 };
 
 export const loader = async ({
@@ -45,7 +35,7 @@ export const loader = async ({
   context,
   params,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
-  const currentUser = await authenticator.isAuthenticated(request, {
+  await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
@@ -55,77 +45,26 @@ export const loader = async ({
   invariant(params.userId, `params.userId is required`);
 
   await prisma.$connect();
-  const [user, tenantsWithoutUser] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: params.userId },
-      include: {
-        TenantUser: { include: { Tenant: true } },
-        Post: {
-          include: { Feed: true, User: true },
-          where: { Feed: { tenantId } },
-        },
-        Comment: {
-          include: {
-            Post: { include: { Feed: true, User: true } },
-            User: true,
-          },
-          where: { Post: { Feed: { tenantId } } },
-        },
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: params.userId },
+    include: {
+      Post: {
+        include: { Feed: true, User: true },
+        where: { Feed: { tenantId } },
       },
-    }),
-    prisma.tenant.findMany({
-      where: {
-        NOT: {
-          TenantUser: {
-            some: {
-              userId: params.userId,
-            },
-          },
+      Comment: {
+        include: {
+          Post: { include: { Feed: true, User: true } },
+          User: true,
         },
+        where: { Post: { Feed: { tenantId } } },
       },
-    }),
-  ]);
-
-  await prisma.$disconnect();
-  if (!user) {
-    throw new Error(`User não encontrado.`);
-  }
-
-  return typedjson({ user, tenantsWithoutUser, currentUser });
-};
-
-export const action: ActionFunction = async ({
-  request,
-  context,
-  params,
-}: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
+    },
   });
 
-  if (!user || user.type !== "SUPERADMIN") {
-    return redirect("/");
-  }
-
-  const body = await request.formData();
-  const { _action, ...values } = Object.fromEntries(body);
-
-  invariant(params.userId, `params.userId is required`);
-
-  await prisma.$connect();
-
-  if (_action === "add_tenant") {
-    await prisma.tenantUser.create({
-      data: {
-        id: ulid(),
-        tenantId: values.tenantId?.toString() || "undefined-tenant",
-        userId: params.userId,
-      },
-    });
-  }
   await prisma.$disconnect();
 
-  return redirect(`/user/${params.userId}`);
+  return typedjson({ user });
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
@@ -160,8 +99,7 @@ const TabButton: React.FC<
 );
 
 export default function () {
-  const { user, tenantsWithoutUser, currentUser } =
-    useTypedLoaderData<LoaderData>();
+  const { user } = useTypedLoaderData<typeof loader>();
   const [activeTab, setActiveTab] = useState<"posts" | "comments">("posts");
 
   return (
@@ -172,30 +110,6 @@ export default function () {
             <MyH1>{user.name}</MyH1>
             <span>{user.email}</span>
           </div>
-          {(user.id === currentUser.id ||
-            currentUser.type === "SUPERADMIN") && (
-            <div className="w-full">
-              <MyH3>Tenants</MyH3>
-              <ul>
-                {user.TenantUser.map((tenantUser) => (
-                  <li key={tenantUser.id}>{tenantUser.Tenant.name}</li>
-                ))}
-              </ul>
-              {currentUser.type === "SUPERADMIN" && (
-                <Form method="post" style={{ display: "inline" }}>
-                  <select name="tenantId">
-                    <option>Selecione</option>
-                    {tenantsWithoutUser.map((tenant) => (
-                      <option value={tenant.id}>{tenant.name}</option>
-                    ))}
-                  </select>
-                  <button type="submit" name="_action" value="add_tenant">
-                    Add to tenant
-                  </button>
-                </Form>
-              )}
-            </div>
-          )}
         </div>
       </Panel>
       <Panel>
