@@ -1,6 +1,6 @@
 import { Tenant, TenantUser, User } from "@prisma/client";
 import { LoaderArgs } from "@remix-run/cloudflare";
-import { Form } from "@remix-run/react";
+import { Outlet } from "@remix-run/react";
 import {
   redirect,
   typedjson,
@@ -52,16 +52,20 @@ export default function Index() {
           {users.map((user) => (
             <li>
               <MyLink to={`/user/${user.id}`}>{user.name}</MyLink>
-              <Form method="post" style={{ display: "inline" }}>
+              <MyLink to={`/admin/users/${user.id}/tenants`}>
+                {user.TenantUser.length} tenants
+              </MyLink>
+              {/* <Form method="post" style={{ display: "inline" }}>
                 <input type="hidden" name="userId" value={user.id} />
                 <button type="submit" name="_action" value="delete">
                   Delete
-                </button>
-              </Form>
+                </button> */}
+              {/* </Form> */}
             </li>
           ))}
         </ul>
       </Panel>
+      <Outlet />
     </main>
   );
 }

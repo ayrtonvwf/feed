@@ -18,11 +18,11 @@ export const loader: LoaderFunction = async ({ request }: LoaderArgs) => {
 
 export default function Index() {
   return (
-    <div>
-      <header className="container mx-auto">
+    <div className="flex">
+      <nav>
         <MyNavLink to="/admin/tenants">Tenants</MyNavLink>
         <MyNavLink to="/admin/users">Usuários</MyNavLink>
-      </header>
+      </nav>
       <div>
         <Outlet />
       </div>
