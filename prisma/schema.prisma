@@ -11,12 +11,25 @@ datasource db {
 }
 
 model Tenant {
-  id         String       @id
-  name       String
-  status     Boolean      @default(true)
-  createdAt  DateTime     @default(now())
-  Feed       Feed[]
-  TenantUser TenantUser[]
+  id           String         @id
+  name         String
+  status       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  Feed         Feed[]
+  TenantUser   TenantUser[]
+  TenantInvite TenantInvite[]
+}
+
+model TenantInvite {
+  id              String    @id
+  email           String
+  tenantId        String
+  invitedByUserId String
+  respondedAt     DateTime?
+  response        Boolean?
+  createdAt       DateTime  @default(now())
+  Tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  User            User      @relation(fields: [invitedByUserId], references: [id])
 }
 
 model User {
@@ -34,6 +47,7 @@ model User {
   CommentModerationRequest CommentModerationRequest[]
   CommentReaction          CommentReaction[]
   TenantUser               TenantUser[]
+  TenantInvite             TenantInvite[]
 }
 
 enum UserType {

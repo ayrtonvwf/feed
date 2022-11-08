@@ -145,10 +145,12 @@ export default function App() {
           <div className="container mx-auto">
             <nav className="flex flex-wrap items-center">
               <MyNavLink to="/">Home</MyNavLink>
+              <MyNavLink to="/invite">Meus Invites</MyNavLink>
               {(user?.type === "SUPERADMIN" ||
                 tenantUser?.type === "MANAGER") && (
                 <>
                   <MyNavLink to={`/feeds`}>Feeds</MyNavLink>
+                  <MyNavLink to={`/invite/tenant`}>Invites do Tenant</MyNavLink>
                   <MyNavLink to={`/users`}>Users</MyNavLink>
                 </>
               )}
