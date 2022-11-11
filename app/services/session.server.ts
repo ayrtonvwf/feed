@@ -1,6 +1,9 @@
 import { createCookieSessionStorage } from "@remix-run/cloudflare";
 
 // export the whole sessionStorage object
+/**
+ * @deprecated use context.sessionStorage.getSession instead
+ */
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: "_session", // use any name you want here
@@ -12,5 +15,8 @@ export const sessionStorage = createCookieSessionStorage({
   },
 });
 
+/**
+ * @deprecated use context.sessionStorage.getSession instead
+ */
 // you can also export the methods individually for your own usage
 export const { getSession, commitSession, destroySession } = sessionStorage;

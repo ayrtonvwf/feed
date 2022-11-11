@@ -3,7 +3,6 @@ import { LoaderArgs } from "@remix-run/cloudflare";
 import { Outlet } from "@remix-run/react";
 import {
   redirect,
-  typedjson,
   TypedJsonResponse,
   useTypedLoaderData,
 } from "remix-typedjson";
@@ -13,7 +12,8 @@ import { MyLink } from "~/components/typography/link";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { getSession } from "~/services/session.server";
+import { commitSession, getSession } from "~/services/session.server";
+import { showToast } from "~/services/toast.server";
 
 type LoaderData = {
   tenantUsers: (TenantUser & { User: User })[];
@@ -51,7 +51,11 @@ export const loader = async ({
   });
   await prisma.$disconnect();
 
-  return typedjson({ tenantUsers });
+  showToast(session, "teste de toast");
+  return redirect("/feeds", {
+    headers: { "Set-Cookie": await commitSession(session) },
+  });
+  // return typedjson({ tenantUsers }, { headers: { "Set-Cookie": await commitSession(session) } });
 };
 
 export default function Index() {

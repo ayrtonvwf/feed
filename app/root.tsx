@@ -19,6 +19,9 @@ import {
   useSubmit,
   useTransition,
 } from "@remix-run/react";
+import { useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import toastifyStyles from "react-toastify/dist/ReactToastify.css";
 import {
   typedjson,
   TypedJsonResponse,
@@ -31,7 +34,10 @@ import { MyNavLink } from "./components/header/link";
 import { authenticator } from "./services/auth.server";
 import styles from "./styles/app.css";
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: styles },
+  { rel: "stylesheet", href: toastifyStyles },
+];
 
 export const meta: MetaFunction = () => ({
   charset: "utf-8",
@@ -45,6 +51,7 @@ type LoaderData = {
   tenantId: string | null;
   tenants: Tenant[];
   tenantUser: TenantUser | null;
+  toastMessage: string | null;
 };
 
 export const loader = async ({
@@ -54,14 +61,24 @@ export const loader = async ({
   const session = await getSession(request.headers.get("cookie"));
   const user = await authenticator.isAuthenticated(request);
 
+  const toastMessage = session.get("toastMessage")?.toString() || null;
+
   if (!user) {
-    return typedjson({
-      feeds: [],
-      user,
-      tenantId: null,
-      tenants: [],
-      tenantUser: null,
-    });
+    return typedjson(
+      {
+        feeds: [],
+        user,
+        tenantId: null,
+        tenants: [],
+        tenantUser: null,
+        toastMessage,
+      },
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
+      }
+    );
   }
 
   await prisma.$connect();
@@ -92,8 +109,8 @@ export const loader = async ({
   await prisma.$disconnect();
 
   return typedjson(
-    { feeds, user, tenantId, tenants, tenantUser },
-    shouldSetTenantId
+    { feeds, user, tenantId, tenants, tenantUser, toastMessage },
+    shouldSetTenantId || toastMessage
       ? {
           headers: {
             "Set-Cookie": await commitSession(session),
@@ -124,7 +141,7 @@ export const action: ActionFunction = async ({
 
 export default function App() {
   const transition = useTransition();
-  const { feeds, tenantId, user, tenants, tenantUser } =
+  const { feeds, tenantId, user, tenants, tenantUser, toastMessage } =
     useTypedLoaderData<LoaderData>();
   const submit = useSubmit();
   const matches = useMatches();
@@ -132,6 +149,15 @@ export default function App() {
 
   const onChangeTenant = (event: any) =>
     submit(event.currentTarget, { replace: true });
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return;
+    }
+    console.log({ toastMessage });
+    const notify = () => toast(toastMessage);
+    notify();
+  }, [toastMessage]);
 
   return (
     <html lang="pt-BR">
@@ -214,6 +240,8 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+        <ToastContainer />
+        {toastMessage}
       </body>
     </html>
   );
