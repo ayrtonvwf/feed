@@ -74,6 +74,7 @@ export default function () {
   return (
     <div>
       <MyH2>Posts</MyH2>
+      <hr />
       {prevPageUrl && <MyLink to={prevPageUrl}>{"<-"} Mais recentes</MyLink>}
       {posts.map((post) => (
         <StandalonePost post={post} />
