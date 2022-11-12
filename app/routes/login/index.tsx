@@ -61,34 +61,10 @@ export default function Index() {
         <ValidatedForm validator={validator} method="post">
           <fieldset className="flex flex-col gap-2">
             <MyInput name="email" label="Email" />
-            <MyInput name="password" label="Password" />
+            <MyInput name="password" label="Password" type="password" />
             <MySubmitButton />
           </fieldset>
         </ValidatedForm>
-        {/* <Form method="post">
-            <input
-              name="email"
-              placeholder="E-mail"
-              required
-              minLength={5}
-              type="email"
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <input
-              name="password"
-              placeholder="Senha"
-              required
-              minLength={5}
-              type="password"
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <button
-              type="submit"
-              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-            >
-              Log in
-            </button>
-        </Form> */}
         <h2>Esqueceu o seu e-mail ou a sua senha?</h2>
         <span className="text-sm">problema seu</span>
       </Panel>

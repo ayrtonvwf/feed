@@ -6,13 +6,24 @@ import {
   LinksFunction,
   redirect,
 } from "@remix-run/cloudflare";
-import { Form, useNavigate } from "@remix-run/react";
+import { useNavigate } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
+import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
+import { z } from "zod";
+import { MyInput } from "~/components/form/input";
+import { MySubmitButton } from "~/components/form/submit-button";
 import { MyH3 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { getSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
+
+export const validator = withZod(
+  z.object({
+    email: z.string().min(1, { message: "Email is required" }).email(),
+  })
+);
 
 export const links: LinksFunction = () => {
   return [
@@ -28,6 +39,13 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
+  const validated = await validator.validate(await request.clone().formData());
+
+  if (validated.error) {
+    // validationError comes from `remix-validated-form`
+    return validationError(validated.error, validated.data);
+  }
+
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
@@ -50,16 +68,13 @@ export const action: ActionFunction = async ({
     return redirect("/");
   }
 
-  const body = await request.formData();
-  const email = body.get("email")?.toString() || "sem@email.com";
-
   await prisma.$connect();
   const [existingInvite, existingTenantUser] = await Promise.all([
     prisma.tenantInvite.findFirst({
-      where: { email, tenantId },
+      where: { email: validated.data.email, tenantId },
     }),
     prisma.tenantUser.findFirst({
-      where: { User: { email }, tenantId },
+      where: { User: { email: validated.data.email }, tenantId },
     }),
   ]);
 
@@ -82,7 +97,7 @@ export const action: ActionFunction = async ({
   await prisma.tenantInvite.create({
     data: {
       id: ulid(),
-      email,
+      email: validated.data.email,
       tenantId,
       invitedByUserId: user.id,
     },
@@ -106,13 +121,10 @@ export default function CreateTenantInviteModal() {
       onDismiss={onDismiss}
     >
       <MyH3>{title}</MyH3>
-      <Form method="post">
-        <label>
-          Email
-          <input type="email" name="email" />
-        </label>
-        <button type="submit">Invite</button>
-      </Form>
+      <ValidatedForm validator={validator} method="post">
+        <MyInput name="email" label="E-mail" type="email" />
+        <MySubmitButton />
+      </ValidatedForm>
     </Dialog>
   );
 }

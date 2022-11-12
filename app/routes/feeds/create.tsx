@@ -6,19 +6,25 @@ import {
   LinksFunction,
   LoaderArgs,
 } from "@remix-run/cloudflare";
-import { Form, useNavigate } from "@remix-run/react";
-import {
-  redirect,
-  typedjson,
-  TypedJsonResponse,
-  useTypedLoaderData,
-} from "remix-typedjson";
+import { useNavigate } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
+import { redirect, typedjson, TypedJsonResponse } from "remix-typedjson";
+import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
+import { z } from "zod";
+import { MyInput } from "~/components/form/input";
+import { MySubmitButton } from "~/components/form/submit-button";
 import { MyH3 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { getSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
+
+export const validator = withZod(
+  z.object({
+    title: z.string().min(5, { message: "Title is required" }),
+  })
+);
 
 export const links: LinksFunction = () => {
   return [
@@ -49,6 +55,13 @@ export const action = async ({
   context,
   params,
 }: DataFunctionArgs) => {
+  const validated = await validator.validate(await request.clone().formData());
+
+  if (validated.error) {
+    // validationError comes from `remix-validated-form`
+    return validationError(validated.error, validated.data);
+  }
+
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
@@ -71,18 +84,10 @@ export const action = async ({
     return redirect("/");
   }
 
-  const body = await request.formData();
-  const { _action, ...values } = Object.fromEntries(body);
-
-  invariant(
-    typeof values.title === "string",
-    `values.title should be a string`
-  );
-
   await prisma.feed.create({
     data: {
       id: ulid(),
-      title: values.title,
+      title: validated.data.title,
       tenantId,
     },
   });
@@ -92,7 +97,6 @@ export const action = async ({
 
 export default function TenantCreateFeedModal() {
   const navigate = useNavigate();
-  const { tenantId } = useTypedLoaderData<typeof loader>();
   const onDismiss = () => navigate(`/feeds`);
   const title = `Create feed`;
 
@@ -104,25 +108,12 @@ export default function TenantCreateFeedModal() {
       onDismiss={onDismiss}
     >
       <MyH3>{title}</MyH3>
-      <Form method="post">
+      <ValidatedForm validator={validator} method="post">
         <fieldset className="flex flex-col gap-2">
-          <input
-            name="title"
-            placeholder="Título"
-            required
-            minLength={5}
-            className="block w-full rounded-lg bg-gray-200 p-2"
-          />
-          <button
-            type="submit"
-            name="_action"
-            value="createFeed"
-            className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-          >
-            Criar
-          </button>
+          <MyInput name="title" label="Título" />
+          <MySubmitButton />
         </fieldset>
-      </Form>
+      </ValidatedForm>
     </Dialog>
   );
 }

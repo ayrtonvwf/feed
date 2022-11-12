@@ -4,14 +4,28 @@ import {
   LoaderFunction,
   redirect,
 } from "@remix-run/cloudflare";
-import { Form } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
+import { ValidatedForm, validationError } from "remix-validated-form";
+import { z } from "zod";
 import { Panel } from "~/components/block/panel";
+import { MyInput } from "~/components/form/input";
+import { MySubmitButton } from "~/components/form/submit-button";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { hash } from "~/services/hash.server";
 import { prisma } from "~/services/prisma.server";
 import { commitSession, getSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
+
+export const validator = withZod(
+  z.object({
+    name: z.string().min(5, { message: "Name is required" }),
+    email: z.string().min(1, { message: "Email is required" }).email(),
+    password: z
+      .string()
+      .min(6, { message: "Password should have at least 6 characters" }),
+  })
+);
 
 export const loader: LoaderFunction = async ({
   request,
@@ -27,13 +41,16 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  const body = await request.formData();
-  const email = body.get("email")?.toString() || "sem@email.com";
-  const password = body.get("password")?.toString() || "Mudar123";
+  const validated = await validator.validate(await request.clone().formData());
+
+  if (validated.error) {
+    // validationError comes from `remix-validated-form`
+    return validationError(validated.error, validated.data);
+  }
 
   await prisma.$connect();
   const existing = await prisma.user.findFirst({
-    where: { email },
+    where: { email: validated.data.email },
   });
   if (existing) {
     await prisma.$disconnect();
@@ -43,9 +60,9 @@ export const action: ActionFunction = async ({
   const user = await prisma.user.create({
     data: {
       id: ulid(),
-      name: body.get("name")?.toString() || "Sem título",
-      email: body.get("email")?.toString() || "sem@email.com",
-      passwordHash: await hash({ password }),
+      name: validated.data.name,
+      email: validated.data.email,
+      passwordHash: await hash({ password: validated.data.password }),
     },
   });
 
@@ -105,39 +122,14 @@ export default function Index() {
         maravilhoso sistema de feed
       </MyH1>
       <Panel>
-        <Form method="post">
+        <ValidatedForm validator={validator} method="post">
           <fieldset className="flex flex-col gap-2">
-            <input
-              name="name"
-              placeholder="Nome"
-              required
-              minLength={5}
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <input
-              name="email"
-              placeholder="E-mail"
-              required
-              minLength={5}
-              type="email"
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <input
-              name="password"
-              placeholder="Senha"
-              required
-              minLength={5}
-              type="password"
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <button
-              type="submit"
-              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-            >
-              Sign up
-            </button>
+            <MyInput name="name" label="Nome" />
+            <MyInput name="email" label="E-mail" type="email" />
+            <MyInput name="password" label="Senha" type="password" />
+            <MySubmitButton />
           </fieldset>
-        </Form>
+        </ValidatedForm>
       </Panel>
     </main>
   );

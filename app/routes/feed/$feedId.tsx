@@ -1,6 +1,7 @@
 import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
 import { LoaderArgs, redirect } from "@remix-run/cloudflare";
-import { Form, useTransition } from "@remix-run/react";
+import { useTransition } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import {
@@ -9,15 +10,34 @@ import {
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
+import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
+import { z } from "zod";
 import { Panel } from "~/components/block/panel";
 import { Spinner } from "~/components/block/spinner";
+import { MyInput } from "~/components/form/input";
+import { MySubmitButton } from "~/components/form/submit-button";
+import { MyTextarea } from "~/components/form/textarea";
 import { MyLink } from "~/components/typography/link";
-import { MyH1 } from "~/components/typography/title";
+import { MyH1, MyH2 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { ulid } from "~/services/uild.server";
 import { FeedLoaderData } from "./types";
+
+export const postValidator = withZod(
+  z.object({
+    title: z.string().min(5, { message: "Title is required" }),
+    description: z.string().min(5, { message: "Description is required" }),
+  })
+);
+
+export const commentValidator = withZod(
+  z.object({
+    postId: z.string().min(1, { message: "postId is required" }),
+    description: z.string().min(5, { message: "Description is required" }),
+  })
+);
 
 export const loader = async ({
   request,
@@ -70,17 +90,30 @@ export const action: ActionFunction = async ({
     `params.feedId should be a string`
   );
 
-  const body = await request.formData();
-  const { _action, ...values } = Object.fromEntries(body);
+  const body = await request.clone().formData();
+  const { _action } = Object.fromEntries(body);
 
-  await prisma.$connect();
+  invariant(
+    typeof _action === "string" && ["post", "comment"].includes(_action),
+    `body._action should be either 'post' or 'comment'`
+  );
 
   if (_action === "post") {
+    const validated = await postValidator.validate(
+      await request.clone().formData()
+    );
+
+    if (validated.error) {
+      // validationError comes from `remix-validated-form`
+      return validationError(validated.error, validated.data);
+    }
+
+    await prisma.$connect();
     await prisma.post.create({
       data: {
         id: ulid(),
-        title: values.title?.toString() || "Sem título",
-        description: values.description?.toString() || "Sem descrição",
+        title: validated.data.title,
+        description: validated.data.description,
         feedId: params.feedId,
         userId: user.id,
       },
@@ -88,11 +121,21 @@ export const action: ActionFunction = async ({
   }
 
   if (_action === "comment") {
+    const validated = await commentValidator.validate(
+      await request.clone().formData()
+    );
+
+    if (validated.error) {
+      // validationError comes from `remix-validated-form`
+      return validationError(validated.error, validated.data);
+    }
+
+    await prisma.$connect();
     await prisma.comment.create({
       data: {
         id: ulid(),
-        description: values.description?.toString() || "Sem descrição",
-        postId: values.postId?.toString() || "invalid-post-id",
+        description: validated.data.description,
+        postId: validated.data.postId,
         userId: user.id,
       },
     });
@@ -102,10 +145,6 @@ export const action: ActionFunction = async ({
   return redirect(`/feed/${params.feedId}`);
 };
 
-/**
- * @todo implement infinite scroll
- * @see https://dev.to/vetswhocode/infinite-scroll-with-remix-run-1g7
- */
 export default function () {
   const { feed: initialFeed } = useTypedLoaderData<FeedLoaderData>();
   const [feed, setFeed] = useState(initialFeed);
@@ -179,33 +218,14 @@ export default function () {
     <main className="container mx-auto">
       <MyH1>{feed.title}</MyH1>
       <Panel>
-        <Form method="post" ref={formRef}>
+        <ValidatedForm validator={postValidator} method="post" ref={formRef}>
           <fieldset className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold">Novo post</h2>
-            <input
-              name="title"
-              placeholder="Título"
-              required
-              minLength={5}
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <textarea
-              name="description"
-              placeholder="Descrição"
-              required
-              minLength={5}
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            ></textarea>
-            <button
-              type="submit"
-              name="_action"
-              value="post"
-              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-            >
-              Post it
-            </button>
+            <MyH2>Novo post</MyH2>
+            <MyInput name="title" label="Título" />
+            <MyTextarea name="description" label="Descrição" />
+            <MySubmitButton name="_action" value="post" />
           </fieldset>
-        </Form>
+        </ValidatedForm>
       </Panel>
       {feed.Post.map((post) => (
         <Panel key={post.id}>
@@ -219,9 +239,10 @@ export default function () {
           </div>
           <hr />
           <div className="flex flex-col gap-2">
-            <Form
-              method="post"
+            <ValidatedForm
+              validator={commentValidator}
               className="flex flex-col gap-2"
+              method="post"
               ref={(el) =>
                 el && commentFormsRef.current
                   ? (commentFormsRef.current[post.id] = el)
@@ -229,22 +250,9 @@ export default function () {
               }
             >
               <input type="hidden" name="postId" value={post.id} />
-              <textarea
-                placeholder="Comentário"
-                className="block w-full rounded-lg bg-gray-200 p-2"
-                name="description"
-                required
-                minLength={5}
-              ></textarea>
-              <button
-                type="submit"
-                className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-                name="_action"
-                value="comment"
-              >
-                Comentar
-              </button>
-            </Form>
+              <MyTextarea name="description" label="Comentário" />
+              <MySubmitButton name="_action" value="comment" />
+            </ValidatedForm>
             {post.Comment.map((comment) => (
               <div className="flex flex-col gap-2" key={comment.id}>
                 <div>

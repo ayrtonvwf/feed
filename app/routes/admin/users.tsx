@@ -55,12 +55,6 @@ export default function Index() {
               <MyLink to={`/admin/users/${user.id}/tenants`}>
                 {user.TenantUser.length} tenants
               </MyLink>
-              {/* <Form method="post" style={{ display: "inline" }}>
-                <input type="hidden" name="userId" value={user.id} />
-                <button type="submit" name="_action" value="delete">
-                  Delete
-                </button> */}
-              {/* </Form> */}
             </li>
           ))}
         </ul>
