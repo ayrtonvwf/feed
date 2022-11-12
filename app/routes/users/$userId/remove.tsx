@@ -61,9 +61,6 @@ export const action = async ({ request, context, params }: LoaderArgs) => {
     failureRedirect: "/login",
   });
 
-  const body = await request.formData();
-  const { _action, ...values } = Object.fromEntries(body);
-
   const session = await getSession(request.headers.get("cookie"));
   const tenantId = session.get("tenantId");
   invariant(

@@ -5,7 +5,8 @@ import {
   LoaderArgs,
   LoaderFunction,
 } from "@remix-run/cloudflare";
-import { Form, useTransition } from "@remix-run/react";
+import { useTransition } from "@remix-run/react";
+import { withZod } from "@remix-validated-form/with-zod";
 import { RefObject, useEffect, useRef } from "react";
 import {
   redirect,
@@ -13,11 +14,21 @@ import {
   TypedJsonResponse,
   useTypedLoaderData,
 } from "remix-typedjson";
+import { ValidatedForm, validationError } from "remix-validated-form";
+import { z } from "zod";
 import { Panel } from "~/components/block/panel";
+import { MyInput } from "~/components/form/input";
+import { MySubmitButton } from "~/components/form/submit-button";
 import { MyH1, MyH2 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
 import { ulid } from "~/services/uild.server";
+
+export const validator = withZod(
+  z.object({
+    name: z.string().min(5, { message: "Name is required" }),
+  })
+);
 
 type TenantWithCounters = Tenant & {
   _count: {
@@ -62,6 +73,13 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
+  const validated = await validator.validate(await request.clone().formData());
+
+  if (validated.error) {
+    // validationError comes from `remix-validated-form`
+    return validationError(validated.error, validated.data);
+  }
+
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
@@ -70,22 +88,17 @@ export const action: ActionFunction = async ({
     return redirect("/");
   }
 
-  const body = await request.formData();
-  const { _action, ...values } = Object.fromEntries(body);
+  await prisma.$connect();
 
-  if (_action === "create") {
-    await prisma.$connect();
+  await prisma.tenant.create({
+    data: {
+      id: ulid(),
+      name: validated.data.name,
+    },
+  });
+  await prisma.$disconnect();
 
-    await prisma.tenant.create({
-      data: {
-        id: ulid(),
-        name: values.name?.toString() || "Sem nome",
-      },
-    });
-    await prisma.$disconnect();
-
-    return redirect(`/admin/tenants`);
-  }
+  return redirect(`/admin/tenants`);
 };
 
 export default function Index() {
@@ -106,26 +119,13 @@ export default function Index() {
     <main className="container mx-auto">
       <MyH1>Tenants</MyH1>
       <Panel>
-        <Form method="post" ref={formRef}>
+        <ValidatedForm validator={validator} method="post" ref={formRef}>
           <fieldset className="flex flex-col gap-2">
             <MyH2>Criar tenant</MyH2>
-            <input
-              name="name"
-              placeholder="Nome"
-              required
-              minLength={5}
-              className="block w-full rounded-lg bg-gray-200 p-2"
-            />
-            <button
-              type="submit"
-              name="_action"
-              value="create"
-              className="ml-auto block rounded-md bg-sky-500 py-2 px-5 text-white"
-            >
-              Create
-            </button>
+            <MyInput name="name" label="Nome" />
+            <MySubmitButton />
           </fieldset>
-        </Form>
+        </ValidatedForm>
       </Panel>
       <Panel>
         <MyH2>Tenants existentes</MyH2>
