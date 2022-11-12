@@ -15,9 +15,9 @@ import {
 } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { MyH3 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { getSession } from "~/services/session.server";
+import { makeSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
 
 export const links: LinksFunction = () => {
@@ -34,7 +34,10 @@ export const loader = async ({
   context,
   params,
 }: LoaderArgs): Promise<TypedJsonResponse<{ tenantId: string }>> => {
-  const session = await getSession(request.headers.get("cookie"));
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
   const tenantId = session.get("tenantId");
   invariant(
     typeof tenantId === "string",
@@ -49,11 +52,14 @@ export const action = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
-  const session = await getSession(request.headers.get("cookie"));
   const tenantId = session.get("tenantId");
   invariant(
     typeof tenantId === "string",

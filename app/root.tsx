@@ -28,10 +28,10 @@ import {
   useTypedLoaderData,
 } from "remix-typedjson";
 import { prisma } from "~/services/prisma.server";
-import { commitSession, getSession } from "~/services/session.server";
+import { makeSession } from "~/services/session.server";
 import { Spinner } from "./components/block/spinner";
 import { MyNavLink } from "./components/header/link";
-import { authenticator } from "./services/auth.server";
+import { getAuth } from "./services/auth.server";
 import styles from "./styles/app.css";
 
 export const links: LinksFunction = () => [
@@ -58,8 +58,11 @@ export const loader = async ({
   request,
   context,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
-  const session = await getSession(request.headers.get("cookie"));
-  const user = await authenticator.isAuthenticated(request);
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const user = await getAuth(sessionStorage).isAuthenticated(request);
 
   const toastMessage = session.get("toastMessage")?.toString() || null;
 
@@ -73,11 +76,13 @@ export const loader = async ({
         tenantUser: null,
         toastMessage,
       },
-      {
-        headers: {
-          "Set-Cookie": await commitSession(session),
-        },
-      }
+      toastMessage
+        ? {
+            headers: {
+              "Set-Cookie": await sessionStorage.commitSession(session),
+            },
+          }
+        : undefined
     );
   }
 
@@ -113,10 +118,10 @@ export const loader = async ({
     shouldSetTenantId || toastMessage
       ? {
           headers: {
-            "Set-Cookie": await commitSession(session),
+            "Set-Cookie": await sessionStorage.commitSession(session),
           },
         }
-      : undefined
+      : {}
   );
 };
 
@@ -129,12 +134,13 @@ export const action: ActionFunction = async ({
   const { _action, ...values } = Object.fromEntries(body);
 
   if (_action === "setTenant") {
-    const session = await getSession(request.headers.get("cookie"));
+    const sessionStorage = makeSession(context);
+    const session = await sessionStorage.getSession(
+      request.headers.get("Cookie")
+    );
     session.set("tenantId", values.id);
     return redirect(`/`, {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
+      headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
     });
   }
 };

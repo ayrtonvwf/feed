@@ -1,11 +1,13 @@
 import { LoaderArgs } from "@remix-run/cloudflare";
 import { typedjson } from "remix-typedjson";
 import invariant from "tiny-invariant";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 
 export const loader = async ({ request, context, params }: LoaderArgs) => {
-  await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

@@ -15,8 +15,9 @@ import {
 } from "remix-typedjson";
 import { Panel } from "~/components/block/panel";
 import { MyH1, MyH2 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
 
 type TenantWithCounters = Tenant & {
@@ -34,7 +35,8 @@ export const loader: LoaderFunction = async ({
   request,
   context,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
@@ -62,7 +64,8 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

@@ -11,9 +11,9 @@ import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
 import { MyLink } from "~/components/typography/link";
 import { MyH1, MyH2 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { getSession } from "~/services/session.server";
+import { makeSession } from "~/services/session.server";
 
 type LoaderData = {
   feeds: Feed[];
@@ -25,11 +25,14 @@ export const loader = async ({
   context,
   params,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
-  const session = await getSession(request.headers.get("cookie"));
   const tenantId = session.get("tenantId");
   invariant(
     typeof tenantId === "string",

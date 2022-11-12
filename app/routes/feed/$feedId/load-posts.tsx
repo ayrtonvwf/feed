@@ -1,8 +1,9 @@
 import { LoaderArgs } from "@remix-run/cloudflare";
 import { typedjson, TypedJsonResponse } from "remix-typedjson";
 import invariant from "tiny-invariant";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 import { FeedLoaderData } from "../types";
 
 export const loader = async ({
@@ -10,7 +11,8 @@ export const loader = async ({
   context,
   params,
 }: LoaderArgs): Promise<TypedJsonResponse<FeedLoaderData>> => {
-  await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

@@ -1,8 +1,9 @@
 import { DataFunctionArgs } from "@remix-run/cloudflare";
 import { redirect } from "remix-typedjson";
 import invariant from "tiny-invariant";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
 
 export const action = async ({
@@ -10,7 +11,8 @@ export const action = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

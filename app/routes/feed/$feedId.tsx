@@ -14,8 +14,9 @@ import { Panel } from "~/components/block/panel";
 import { Spinner } from "~/components/block/spinner";
 import { MyLink } from "~/components/typography/link";
 import { MyH1 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
 import { FeedLoaderData } from "./types";
 
@@ -24,7 +25,8 @@ export const loader = async ({
   context,
   params,
 }: LoaderArgs): Promise<TypedJsonResponse<FeedLoaderData>> => {
-  await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
@@ -61,7 +63,8 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

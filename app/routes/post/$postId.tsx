@@ -4,11 +4,13 @@ import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
 import { DateTime } from "~/components/typography/date-time";
 import { MyLink } from "~/components/typography/link";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 
 export const loader = async ({ request, context, params }: LoaderArgs) => {
-  await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

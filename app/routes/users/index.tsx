@@ -10,9 +10,9 @@ import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
 import { MyLink } from "~/components/typography/link";
 import { MyH1 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { commitSession, getSession } from "~/services/session.server";
+import { makeSession } from "~/services/session.server";
 import { showToast } from "~/services/toast.server";
 
 type LoaderData = {
@@ -23,11 +23,14 @@ export const loader = async ({
   request,
   context,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
-  const session = await getSession(request.headers.get("cookie"));
   const tenantId = session.get("tenantId");
   invariant(
     typeof tenantId === "string",
@@ -53,7 +56,7 @@ export const loader = async ({
 
   showToast(session, "teste de toast");
   return redirect("/feeds", {
-    headers: { "Set-Cookie": await commitSession(session) },
+    headers: { "Set-Cookie": await sessionStorage.commitSession(session) },
   });
   // return typedjson({ tenantUsers }, { headers: { "Set-Cookie": await commitSession(session) } });
 };

@@ -10,8 +10,9 @@ import {
 import { Panel } from "~/components/block/panel";
 import { MyLink } from "~/components/typography/link";
 import { MyH1 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 
 type LoaderData = {
   users: (User & { TenantUser: TenantUser[] })[];
@@ -22,7 +23,8 @@ export const loader = async ({
   request,
   context,
 }: LoaderArgs): Promise<TypedJsonResponse<LoaderData>> => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

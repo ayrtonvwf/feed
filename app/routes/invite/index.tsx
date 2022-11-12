@@ -4,11 +4,13 @@ import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { Panel } from "~/components/block/panel";
 import { DateTime } from "~/components/typography/date-time";
 import { MyH1 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { makeSession } from "~/services/session.server";
 
 export const loader = async ({ request, context }: LoaderArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const user = await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 

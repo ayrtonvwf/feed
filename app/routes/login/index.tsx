@@ -6,14 +6,16 @@ import {
 import { Form } from "@remix-run/react";
 import { Panel } from "~/components/block/panel";
 import { MyH1 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
+import { makeSession } from "~/services/session.server";
 
 // Finally, we can export a loader function where we check if the user is
 // authenticated with `authenticator.isAuthenticated` and redirect to the
 // dashboard if it is or return null if it's not
-export async function loader({ request }: LoaderArgs) {
+export async function loader({ request, context }: LoaderArgs) {
   // If the user is already authenticated redirect to /dashboard directly
-  return await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  return await getAuth(sessionStorage).isAuthenticated(request, {
     successRedirect: "/",
   });
 }
@@ -23,7 +25,8 @@ export const action: ActionFunction = async ({
   context,
   params,
 }: DataFunctionArgs) => {
-  return await authenticator.authenticate("user-pass", request, {
+  const sessionStorage = makeSession(context);
+  return await getAuth(sessionStorage).authenticate("user-pass", request, {
     successRedirect: "/",
     failureRedirect: "/login",
   });

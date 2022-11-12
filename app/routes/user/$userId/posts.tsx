@@ -10,20 +10,23 @@ import {
   StandalonePostType,
 } from "~/components/feed/standalone-post";
 import { MyH2 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { getSession } from "~/services/session.server";
+import { makeSession } from "~/services/session.server";
 
 export const loader = async ({
   request,
   context,
   params,
 }: LoaderArgs): Promise<TypedJsonResponse<{ posts: StandalonePostType[] }>> => {
-  await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
+  await getAuth(sessionStorage).isAuthenticated(request, {
     failureRedirect: "/login",
   });
 
-  const session = await getSession(request.headers.get("cookie"));
   const tenantId = session.get("tenantId")?.toString() || "";
 
   invariant(params.userId, `params.userId is required`);

@@ -7,17 +7,18 @@ import {
 import { Form } from "@remix-run/react";
 import { Panel } from "~/components/block/panel";
 import { MyH1 } from "~/components/typography/title";
-import { authenticator } from "~/services/auth.server";
+import { getAuth } from "~/services/auth.server";
 import { hash } from "~/services/hash.server";
 import { prisma } from "~/services/prisma.server";
-import { commitSession, getSession } from "~/services/session.server";
+import { makeSession } from "~/services/session.server";
 import { ulid } from "~/services/uild.server";
 
 export const loader: LoaderFunction = async ({
   request,
   context,
 }: DataFunctionArgs) => {
-  return await authenticator.isAuthenticated(request, {
+  const sessionStorage = makeSession(context);
+  return await getAuth(sessionStorage).isAuthenticated(request, {
     successRedirect: "/",
   });
 };
@@ -86,15 +87,14 @@ export const action: ActionFunction = async ({
    *
    * @see https://github.com/sergiodxa/remix-auth#custom-redirect-url-based-on-the-user
    */
-  const session = await getSession(request.headers.get("cookie"));
+  const sessionStorage = makeSession(context);
+  const session = await sessionStorage.getSession(
+    request.headers.get("Cookie")
+  );
   session.set("tenantId", tenant.id);
-  session.set(authenticator.sessionKey, user);
+  session.set(getAuth(sessionStorage).sessionKey, user);
 
-  return redirect(`/`, {
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
-  });
+  return redirect(`/`);
 };
 
 export default function Index() {
