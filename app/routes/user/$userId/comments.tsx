@@ -74,6 +74,7 @@ export default function () {
   return (
     <div>
       <MyH2>Comments</MyH2>
+      <hr />
       {prevPageUrl && <MyLink to={prevPageUrl}>{"<-"} Mais recentes</MyLink>}
       {comments.map((comment) => (
         <StandaloneComment comment={comment} />

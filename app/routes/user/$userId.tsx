@@ -58,6 +58,7 @@ export default function () {
           <span>{user.email}</span>
         </div>
         <header className="flex">
+          <MyNavLink to={`/user/${user.id}`}>Sobre</MyNavLink>
           <MyNavLink to={`/user/${user.id}/posts`}>Posts</MyNavLink>
           <MyNavLink to={`/user/${user.id}/comments`}>Comments</MyNavLink>
         </header>
