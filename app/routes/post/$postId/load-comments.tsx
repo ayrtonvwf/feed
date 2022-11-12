@@ -21,19 +21,23 @@ export const loader = async ({ request, context, params }: LoaderArgs) => {
    * @see https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination
    */
   await prisma.$connect();
-  const comments = await prisma.comment.findMany({
-    where: { postId: params.postId },
-    take: 2,
-    skip: 1, // Skip the cursor
-    cursor: {
-      id: after,
-    },
+  const post = await prisma.post.findUniqueOrThrow({
+    where: { id: params.postId },
     include: {
       User: true,
+      Feed: true,
+      Comment: {
+        take: 3,
+        skip: 1,
+        include: { User: true },
+        cursor: {
+          id: after,
+        },
+        orderBy: { id: "asc" },
+      },
     },
-    orderBy: { id: "desc" },
   });
   await prisma.$disconnect();
 
-  return typedjson({ comments });
+  return typedjson({ post });
 };

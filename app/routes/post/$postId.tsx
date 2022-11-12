@@ -1,7 +1,14 @@
 import { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/cloudflare";
-import { typedjson, useTypedLoaderData } from "remix-typedjson";
+import { useEffect, useState } from "react";
+import { useInView } from "react-intersection-observer";
+import {
+  typedjson,
+  useTypedFetcher,
+  useTypedLoaderData,
+} from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { Panel } from "~/components/block/panel";
+import { Spinner } from "~/components/block/spinner";
 import { DateTime } from "~/components/typography/date-time";
 import { MyLink } from "~/components/typography/link";
 import { authenticator } from "~/services/auth.server";
@@ -21,7 +28,7 @@ export const loader = async ({ request, context, params }: LoaderArgs) => {
     include: {
       User: true,
       Feed: true,
-      Comment: { take: 5, include: { User: true } },
+      Comment: { take: 3, include: { User: true }, orderBy: { id: "asc" } },
     },
   });
 
@@ -62,7 +69,50 @@ const TabButton: React.FC<
 );
 
 export default function () {
-  const { post } = useTypedLoaderData<typeof loader>();
+  const { post: initialPost } = useTypedLoaderData<typeof loader>();
+  const [post, setPost] = useState(initialPost);
+
+  const [shouldFetchMore, setShouldFetchMore] = useState(
+    post.Comment.length > 0
+  );
+  const moreComments = useTypedFetcher<typeof loader>();
+
+  useEffect(() => {
+    /**
+     * @see https://dev.to/vetswhocode/infinite-scroll-with-remix-run-1g7
+     */
+    if (!moreComments.data) {
+      return;
+    }
+
+    setPost({
+      ...post,
+      Comment: [...post.Comment, ...moreComments.data.post.Comment],
+    });
+    setShouldFetchMore(moreComments.data.post.Comment.length > 0);
+  }, [moreComments.data]);
+
+  const endOfCommentsInView = useInView();
+
+  useEffect(() => {
+    if (
+      !endOfCommentsInView.inView ||
+      !shouldFetchMore ||
+      moreComments.state !== "idle"
+    ) {
+      return;
+    }
+    moreComments.submit(
+      { after: post.Comment[post.Comment.length - 1].id },
+      { method: "get", action: `/post/${post.id}/load-comments` }
+    );
+  }, [endOfCommentsInView.inView, moreComments.data]);
+
+  useEffect(() => {
+    if (post?.id !== initialPost?.id) {
+      setPost(initialPost);
+    }
+  }, [initialPost]);
 
   return (
     <main className="container mx-auto">
@@ -100,6 +150,16 @@ export default function () {
               <p>{comment.description}</p>
             </Panel>
           ))}
+          <div
+            ref={endOfCommentsInView.ref}
+            className="flex justify-center items-center py-10"
+          >
+            {shouldFetchMore ? (
+              <Spinner />
+            ) : (
+              <p>Não há mais comentários para carregar.</p>
+            )}
+          </div>
         </div>
       </Panel>
     </main>
