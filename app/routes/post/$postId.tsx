@@ -1,18 +1,40 @@
-import { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/cloudflare";
+import {
+  DataFunctionArgs,
+  ErrorBoundaryComponent,
+  LoaderArgs,
+} from "@remix-run/cloudflare";
+import { withZod } from "@remix-validated-form/with-zod";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import {
+  redirect,
   typedjson,
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
+import {
+  useFormContext,
+  useIsSubmitting,
+  ValidatedForm,
+  validationError,
+} from "remix-validated-form";
 import invariant from "tiny-invariant";
+import { z } from "zod";
 import { Panel } from "~/components/block/panel";
 import { Spinner } from "~/components/block/spinner";
+import { MySubmitButton } from "~/components/form/submit-button";
+import { MyTextarea } from "~/components/form/textarea";
 import { DateTime } from "~/components/typography/date-time";
 import { MyLink } from "~/components/typography/link";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
+import { ulid } from "~/services/uild.server";
+
+export const validator = withZod(
+  z.object({
+    description: z.string().min(5, { message: "Description is required" }),
+  })
+);
 
 export const loader = async ({ request, context, params }: LoaderArgs) => {
   await authenticator.isAuthenticated(request, {
@@ -37,6 +59,41 @@ export const loader = async ({ request, context, params }: LoaderArgs) => {
   return typedjson({ post });
 };
 
+export const action = async ({
+  request,
+  context,
+  params,
+}: DataFunctionArgs) => {
+  const user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+
+  invariant(
+    typeof params.postId === "string",
+    `params.postId should be a string`
+  );
+
+  const validated = await validator.validate(await request.clone().formData());
+
+  if (validated.error) {
+    // validationError comes from `remix-validated-form`
+    return validationError(validated.error, validated.data);
+  }
+
+  await prisma.$connect();
+  await prisma.comment.create({
+    data: {
+      id: ulid(),
+      description: validated.data.description,
+      postId: params.postId,
+      userId: user.id,
+    },
+  });
+
+  await prisma.$disconnect();
+  return redirect(`/post/${params.postId}`);
+};
+
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
   console.error(error);
   return (
@@ -49,24 +106,6 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
     </div>
   );
 };
-
-const TabButton: React.FC<
-  React.HTMLProps<HTMLButtonElement> & { active: boolean }
-> = (props) => (
-  /**
-   * @todo pass props to button with spread operator
-   */
-  <button
-    className={`block w-1/2 rounded-t-lg border-b-4 border-solid px-4 py-2 text-blue-600 ${
-      props.active
-        ? "border-sky-500 bg-sky-100"
-        : "border-slate-200 bg-slate-100"
-    }`}
-    onClick={props.onClick}
-  >
-    {props.children}
-  </button>
-);
 
 export default function () {
   const { post: initialPost } = useTypedLoaderData<typeof loader>();
@@ -114,6 +153,15 @@ export default function () {
     }
   }, [initialPost]);
 
+  const commentFormId = "commentForm";
+  const isCommenting = useIsSubmitting(commentFormId);
+  const commentForm = useFormContext(commentFormId);
+  useEffect(() => {
+    if (!isCommenting) {
+      commentForm.reset();
+    }
+  }, [isCommenting]);
+
   return (
     <main className="container mx-auto">
       <Panel
@@ -136,6 +184,15 @@ export default function () {
           <p>{post.description}</p>
         </div>
         <div>
+          <ValidatedForm
+            id={commentFormId}
+            validator={validator}
+            className="flex flex-col gap-2"
+            method="post"
+          >
+            <MyTextarea name="description" label="Comentário" />
+            <MySubmitButton />
+          </ValidatedForm>
           {post.Comment.map((comment) => (
             <Panel key={comment.id}>
               <div className="flex">
