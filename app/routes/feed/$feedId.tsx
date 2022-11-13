@@ -10,7 +10,12 @@ import {
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
-import { ValidatedForm, validationError } from "remix-validated-form";
+import {
+  useFormContext,
+  useIsSubmitting,
+  ValidatedForm,
+  validationError,
+} from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 import { Panel } from "~/components/block/panel";
@@ -169,13 +174,12 @@ export default function () {
 
   const transition = useTransition();
 
-  const isPosting =
-    transition.state === "submitting" &&
-    transition.submission.formData.get("_action") === "post";
-  const formRef = useRef() as RefObject<HTMLFormElement>;
+  const postFormId = "postForm";
+  const isPosting = useIsSubmitting(postFormId);
+  const postForm = useFormContext(postFormId);
   useEffect(() => {
     if (!isPosting) {
-      formRef.current?.reset();
+      postForm.reset();
     }
   }, [isPosting]);
 
@@ -218,7 +222,7 @@ export default function () {
     <main className="container mx-auto">
       <MyH1>{feed.title}</MyH1>
       <Panel>
-        <ValidatedForm validator={postValidator} method="post" ref={formRef}>
+        <ValidatedForm id={postFormId} validator={postValidator} method="post">
           <fieldset className="flex flex-col gap-2">
             <MyH2>Novo post</MyH2>
             <MyInput name="title" label="Título" />
