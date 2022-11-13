@@ -12,12 +12,7 @@ import {
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
-import {
-  useFormContext,
-  useIsSubmitting,
-  ValidatedForm,
-  validationError,
-} from "remix-validated-form";
+import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 import { Panel } from "~/components/block/panel";
@@ -153,15 +148,6 @@ export default function () {
     }
   }, [initialPost]);
 
-  const commentFormId = "commentForm";
-  const isCommenting = useIsSubmitting(commentFormId);
-  const commentForm = useFormContext(commentFormId);
-  useEffect(() => {
-    if (!isCommenting) {
-      commentForm.reset();
-    }
-  }, [isCommenting]);
-
   return (
     <main className="container mx-auto">
       <Panel
@@ -185,7 +171,7 @@ export default function () {
         </div>
         <div>
           <ValidatedForm
-            id={commentFormId}
+            resetAfterSubmit
             validator={validator}
             className="flex flex-col gap-2"
             method="post"

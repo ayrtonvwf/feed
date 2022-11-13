@@ -1,8 +1,7 @@
 import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
 import { LoaderArgs, redirect } from "@remix-run/cloudflare";
-import { useTransition } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import {
   typedjson,
@@ -10,12 +9,7 @@ import {
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
-import {
-  useFormContext,
-  useIsSubmitting,
-  ValidatedForm,
-  validationError,
-} from "remix-validated-form";
+import { ValidatedForm, validationError } from "remix-validated-form";
 import invariant from "tiny-invariant";
 import { z } from "zod";
 import { Panel } from "~/components/block/panel";
@@ -172,34 +166,6 @@ export default function () {
     setShouldFetchMore(morePosts.data.feed.Post.length > 0);
   }, [morePosts.data]);
 
-  const transition = useTransition();
-
-  const postFormId = "postForm";
-  const isPosting = useIsSubmitting(postFormId);
-  const postForm = useFormContext(postFormId);
-  useEffect(() => {
-    if (!isPosting) {
-      postForm.reset();
-    }
-  }, [isPosting]);
-
-  const isCommentingOnPostId =
-    transition.state === "submitting" &&
-    transition.submission.formData.get("_action") === "comment"
-      ? transition.submission.formData.get("postId")?.toString()
-      : null;
-  const commentFormsRef = useRef({}) as RefObject<
-    Record<string, HTMLFormElement>
-  >;
-  /**
-   * @see https://aparnajoshi.netlify.app/reactjs-multiple-refs-for-handling-form-elements#useref-for-handling-a-multiple-input-element
-   */
-  useEffect(() => {
-    if (isCommentingOnPostId) {
-      commentFormsRef.current?.[isCommentingOnPostId].reset();
-    }
-  }, [isCommentingOnPostId]);
-
   const endOfFeedInView = useInView();
 
   useEffect(() => {
@@ -222,7 +188,7 @@ export default function () {
     <main className="container mx-auto">
       <MyH1>{feed.title}</MyH1>
       <Panel>
-        <ValidatedForm id={postFormId} validator={postValidator} method="post">
+        <ValidatedForm resetAfterSubmit validator={postValidator} method="post">
           <fieldset className="flex flex-col gap-2">
             <MyH2>Novo post</MyH2>
             <MyInput name="title" label="Título" />
@@ -247,11 +213,7 @@ export default function () {
               validator={commentValidator}
               className="flex flex-col gap-2"
               method="post"
-              ref={(el) =>
-                el && commentFormsRef.current
-                  ? (commentFormsRef.current[post.id] = el)
-                  : null
-              }
+              resetAfterSubmit
             >
               <input type="hidden" name="postId" value={post.id} />
               <MyTextarea name="description" label="Comentário" />

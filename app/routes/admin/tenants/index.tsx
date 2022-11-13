@@ -5,9 +5,7 @@ import {
   LoaderArgs,
   LoaderFunction,
 } from "@remix-run/cloudflare";
-import { useTransition } from "@remix-run/react";
 import { withZod } from "@remix-validated-form/with-zod";
-import { RefObject, useEffect, useRef } from "react";
 import {
   redirect,
   typedjson,
@@ -103,23 +101,12 @@ export const action: ActionFunction = async ({
 
 export default function Index() {
   const { tenants } = useTypedLoaderData<LoaderData>();
-  const transition = useTransition();
-
-  const isCreating =
-    transition.state === "submitting" &&
-    transition.submission.formData.get("_action") === "create";
-  const formRef = useRef() as RefObject<HTMLFormElement>;
-  useEffect(() => {
-    if (!isCreating) {
-      formRef.current?.reset();
-    }
-  }, [isCreating]);
 
   return (
     <main className="container mx-auto">
       <MyH1>Tenants</MyH1>
       <Panel>
-        <ValidatedForm validator={validator} method="post" ref={formRef}>
+        <ValidatedForm validator={validator} method="post" resetAfterSubmit>
           <fieldset className="flex flex-col gap-2">
             <MyH2>Criar tenant</MyH2>
             <MyInput name="name" label="Nome" />
