@@ -21,23 +21,36 @@ export const loader = async ({ request, context, params }: LoaderArgs) => {
    * @see https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination
    */
   await prisma.$connect();
-  const post = await prisma.post.findUniqueOrThrow({
-    where: { id: params.postId },
-    include: {
-      User: true,
-      Feed: true,
-      Comment: {
-        take: 3,
-        skip: 1,
-        include: { User: true },
-        cursor: {
-          id: after,
+  const [post, lastComment] = await Promise.all([
+    prisma.post.findUnique({
+      where: { id: params.postId },
+      include: {
+        User: true,
+        Feed: true,
+        Comment: {
+          take: 3,
+          skip: 1,
+          include: { User: true },
+          cursor: {
+            id: after,
+          },
+          orderBy: { id: "asc" },
         },
-        orderBy: { id: "asc" },
       },
-    },
-  });
+    }),
+    prisma.comment.findFirst({
+      where: { postId: params.postId },
+      orderBy: { id: "desc" },
+    }),
+  ]);
+
   await prisma.$disconnect();
 
-  return typedjson({ post });
+  if (!post) {
+    throw new Error("Post not found");
+  }
+
+  return typedjson({ post, lastCommentId: lastComment?.id || null });
 };
+
+export type CommentLoaderData = typeof loader;

@@ -1,20 +1,16 @@
-import {
-  DataFunctionArgs,
-  ErrorBoundaryComponent,
-  LoaderArgs,
-} from "@remix-run/cloudflare";
-import { withZod } from "@remix-validated-form/with-zod";
+import { Comment, Feed, Post, User } from "@prisma/client";
+import { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/cloudflare";
+import { FetcherWithComponents } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import {
-  redirect,
   typedjson,
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
-import { ValidatedForm, validationError } from "remix-validated-form";
+import { UseDataFunctionReturn } from "remix-typedjson/dist/remix";
+import { ValidatedForm } from "remix-validated-form";
 import invariant from "tiny-invariant";
-import { z } from "zod";
 import { Panel } from "~/components/block/panel";
 import { Spinner } from "~/components/block/spinner";
 import { MySubmitButton } from "~/components/form/submit-button";
@@ -23,13 +19,11 @@ import { DateTime } from "~/components/typography/date-time";
 import { MyLink } from "~/components/typography/link";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { ulid } from "~/services/uild.server";
-
-export const validator = withZod(
-  z.object({
-    description: z.string().min(5, { message: "Description is required" }),
-  })
-);
+import {
+  commentValidator,
+  CreateCommentAction,
+} from "./$postId/create-comment";
+import { CommentLoaderData } from "./$postId/load-comments";
 
 export const loader = async ({ request, context, params }: LoaderArgs) => {
   await authenticator.isAuthenticated(request, {
@@ -40,53 +34,29 @@ export const loader = async ({ request, context, params }: LoaderArgs) => {
 
   await prisma.$connect();
 
-  const post = await prisma.post.findUniqueOrThrow({
-    where: { id: params.postId },
-    include: {
-      User: true,
-      Feed: true,
-      Comment: { take: 3, include: { User: true }, orderBy: { id: "asc" } },
-    },
-  });
+  const [post, lastComment] = await Promise.all([
+    prisma.post.findUnique({
+      where: { id: params.postId },
+      include: {
+        User: true,
+        Feed: true,
+        Comment: { take: 3, include: { User: true }, orderBy: { id: "asc" } },
+        _count: { select: { Comment: true } },
+      },
+    }),
+    prisma.comment.findFirst({
+      where: { postId: params.postId },
+      orderBy: { id: "desc" },
+    }),
+  ]);
 
-  await prisma.$disconnect();
-
-  return typedjson({ post });
-};
-
-export const action = async ({
-  request,
-  context,
-  params,
-}: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-
-  invariant(
-    typeof params.postId === "string",
-    `params.postId should be a string`
-  );
-
-  const validated = await validator.validate(await request.clone().formData());
-
-  if (validated.error) {
-    // validationError comes from `remix-validated-form`
-    return validationError(validated.error, validated.data);
+  if (!post) {
+    throw new Error("Post not found");
   }
 
-  await prisma.$connect();
-  await prisma.comment.create({
-    data: {
-      id: ulid(),
-      description: validated.data.description,
-      postId: params.postId,
-      userId: user.id,
-    },
-  });
-
   await prisma.$disconnect();
-  return redirect(`/post/${params.postId}`);
+
+  return typedjson({ post, lastCommentId: lastComment?.id || null });
 };
 
 export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
@@ -102,14 +72,73 @@ export const ErrorBoundary: ErrorBoundaryComponent = ({ error }) => {
   );
 };
 
+const mergeComments = <T extends Comment>(
+  comments: T[],
+  newComments: T[],
+  removeIds?: string[]
+): T[] => {
+  return [...comments, ...newComments]
+    .sort(
+      // order cronologically
+      (a, b) => a.id.localeCompare(b.id)
+    )
+    .reduce((acc, cur) => {
+      if (!acc.length) {
+        return [cur];
+      }
+      // remove duplicates or those that should be removed
+      if (acc[acc.length - 1].id === cur.id || removeIds?.includes(cur.id)) {
+        return acc;
+      }
+      return [...acc, cur];
+    }, [] as T[]);
+};
+
+type PostState = {
+  data: Post & { _count: { Comment: number }; User: User; Feed: Feed };
+
+  /**
+   * The comments created on this session/page view.
+   */
+  createdComments: (Comment & { User: User })[];
+
+  /**
+   * All the loaded comments. Not directly shown in the UI.
+   */
+  loadedComments: (Comment & { User: User })[];
+
+  /**
+   * The loaded comments excluding the ones that were created on this session/page view.
+   */
+  thirdPartyComments: (Comment & { User: User })[];
+
+  lastLoadedCommentId: string | null;
+  lastCommentIdToLoad: string | null;
+};
+
+const loaderDataToPostState = (
+  loaderData: UseDataFunctionReturn<typeof loader>
+): PostState => ({
+  data: loaderData.post,
+  createdComments: [],
+  loadedComments: loaderData.post.Comment,
+  thirdPartyComments: loaderData.post.Comment,
+  lastLoadedCommentId:
+    loaderData.post.Comment[loaderData.post.Comment.length - 1]?.id || null,
+  lastCommentIdToLoad: loaderData.lastCommentId,
+});
+
 export default function () {
-  const { post: initialPost } = useTypedLoaderData<typeof loader>();
-  const [post, setPost] = useState(initialPost);
+  const loaderData = useTypedLoaderData<typeof loader>();
+  const [post, setPost] = useState<PostState>(
+    loaderDataToPostState(loaderData)
+  );
 
   const [shouldFetchMore, setShouldFetchMore] = useState(
-    post.Comment.length > 0
+    post.lastCommentIdToLoad &&
+      post.lastCommentIdToLoad !== post.lastLoadedCommentId
   );
-  const moreComments = useTypedFetcher<typeof loader>();
+  const moreComments = useTypedFetcher<CommentLoaderData>();
 
   useEffect(() => {
     /**
@@ -119,11 +148,31 @@ export default function () {
       return;
     }
 
+    /**
+     * @todo handle better the lastLoadedCommentId/lastCommentIdToLoad interaction with the createdComments ids
+     */
+    const loadedComments = mergeComments(
+      post.loadedComments,
+      moreComments.data.post.Comment
+    );
+    const thirdPartyComments = mergeComments(
+      post.thirdPartyComments,
+      moreComments.data.post.Comment,
+      post.createdComments.map((c) => c.id)
+    );
+    const lastLoadedCommentId =
+      loadedComments[loadedComments.length - 1]?.id || null;
     setPost({
       ...post,
-      Comment: [...post.Comment, ...moreComments.data.post.Comment],
+      loadedComments: loadedComments,
+      thirdPartyComments,
+      lastLoadedCommentId,
+      lastCommentIdToLoad: moreComments.data.lastCommentId,
     });
-    setShouldFetchMore(moreComments.data.post.Comment.length > 0);
+    setShouldFetchMore(
+      moreComments.data.lastCommentId &&
+        moreComments.data.lastCommentId !== lastLoadedCommentId
+    );
   }, [moreComments.data]);
 
   const endOfCommentsInView = useInView();
@@ -137,56 +186,93 @@ export default function () {
       return;
     }
     moreComments.submit(
-      { after: post.Comment[post.Comment.length - 1].id },
-      { method: "get", action: `/post/${post.id}/load-comments` }
+      post.lastLoadedCommentId ? { after: post.lastLoadedCommentId } : null,
+      { method: "get", action: `/post/${post.data.id}/load-comments` }
     );
-  }, [endOfCommentsInView.inView, moreComments.data]);
+  }, [endOfCommentsInView.inView, moreComments.data, shouldFetchMore]);
 
   useEffect(() => {
-    if (post?.id !== initialPost?.id) {
-      setPost(initialPost);
+    if (post?.data.id !== loaderData?.post.id) {
+      setPost(loaderDataToPostState(loaderData));
     }
-  }, [initialPost]);
+  }, [loaderData]);
+
+  const commentSubmiter = useTypedFetcher<CreateCommentAction>();
+  useEffect(() => {
+    if (!commentSubmiter?.data) {
+      return;
+    }
+    setPost({
+      ...post,
+      createdComments: mergeComments(post.createdComments, [
+        commentSubmiter.data.createdComment,
+      ]),
+      lastCommentIdToLoad: commentSubmiter.data.createdComment.id,
+    });
+    setShouldFetchMore(true);
+  }, [commentSubmiter.data]);
 
   return (
     <main className="container mx-auto">
       <Panel
-        key={post.id}
+        key={post.data.id}
         className="border-[1px] border-solid border-gray-300"
       >
         <div>
           <div className="flex gap-2">
             <div>
-              <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink>{" "}
+              <MyLink to={`/user/${post.data.User.id}`}>
+                {post.data.User.name}
+              </MyLink>{" "}
               postou em{" "}
-              <MyLink to={`/feed/${post.Feed.id}`}>{post.Feed.title}</MyLink>
+              <MyLink to={`/feed/${post.data.Feed.id}`}>
+                {post.data.Feed.title}
+              </MyLink>
             </div>
             <div>|</div>
-            <DateTime>{post.createdAt}</DateTime>
-            <MyLink to={`/post/${post.id}`}>#ref</MyLink>
+            <DateTime>{post.data.createdAt}</DateTime>
+            <MyLink to={`/post/${post.data.id}`}>#ref</MyLink>
           </div>
           <hr className="my-2" />
-          <h3 className="font-bold">{post.title}</h3>
-          <p>{post.description}</p>
+          <h3 className="font-bold">{post.data.title}</h3>
+          <p>{post.data.description}</p>
         </div>
         <div>
           <ValidatedForm
             resetAfterSubmit
-            validator={validator}
+            validator={commentValidator}
             className="flex flex-col gap-2"
             method="post"
+            action={`/post/${post.data.id}/create-comment`}
+            fetcher={commentSubmiter as FetcherWithComponents<never>}
           >
             <MyTextarea name="description" label="Comentário" />
             <MySubmitButton />
           </ValidatedForm>
-          {post.Comment.map((comment) => (
+          {post.createdComments.map((comment) => (
             <Panel key={comment.id}>
               <div className="flex">
                 <MyLink to={`/user/${comment.User.id}`}>
                   {comment.User.name}
                 </MyLink>{" "}
                 <DateTime>{comment.createdAt}</DateTime>
-                <MyLink to={`/post/${post.id}?comment=${comment.id}`}>
+                <MyLink to={`/post/${post.data.id}?comment=${comment.id}`}>
+                  #ref
+                </MyLink>
+              </div>
+              <p>
+                <b>{comment.description}</b>
+              </p>
+            </Panel>
+          ))}
+          {post.thirdPartyComments.map((comment) => (
+            <Panel key={comment.id}>
+              <div className="flex">
+                <MyLink to={`/user/${comment.User.id}`}>
+                  {comment.User.name}
+                </MyLink>{" "}
+                <DateTime>{comment.createdAt}</DateTime>
+                <MyLink to={`/post/${post.data.id}?comment=${comment.id}`}>
                   #ref
                 </MyLink>
               </div>
