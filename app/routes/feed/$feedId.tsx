@@ -14,10 +14,10 @@ import invariant from "tiny-invariant";
 import { z } from "zod";
 import { Panel } from "~/components/block/panel";
 import { Spinner } from "~/components/block/spinner";
+import { FeedPost } from "~/components/feed/feed-post";
 import { MyInput } from "~/components/form/input";
 import { MySubmitButton } from "~/components/form/submit-button";
 import { MyTextarea } from "~/components/form/textarea";
-import { MyLink } from "~/components/typography/link";
 import { MyH1, MyH2 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
@@ -198,40 +198,41 @@ export default function () {
         </ValidatedForm>
       </Panel>
       {feed.Post.map((post) => (
-        <Panel key={post.id}>
-          <div className="mb-5 flex flex-col gap-2">
-            <div>
-              <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink>
-              <span>{post.createdAt.toLocaleString()}</span>
-            </div>
-            <h3 className="font-bold">{post.title}</h3>
-            <p>{post.description}</p>
-          </div>
-          <hr />
-          <div className="flex flex-col gap-2">
-            <ValidatedForm
-              validator={commentValidator}
-              className="flex flex-col gap-2"
-              method="post"
-              resetAfterSubmit
-            >
-              <input type="hidden" name="postId" value={post.id} />
-              <MyTextarea name="description" label="Comentário" />
-              <MySubmitButton name="_action" value="comment" />
-            </ValidatedForm>
-            {post.Comment.map((comment) => (
-              <div className="flex flex-col gap-2" key={comment.id}>
-                <div>
-                  <MyLink to={`/user/${comment.User.id}`}>
-                    {comment.User.name}
-                  </MyLink>
-                  <span>{comment.createdAt.toLocaleString()}</span>
-                </div>
-                <p>{comment.description}</p>
-              </div>
-            ))}
-          </div>
-        </Panel>
+        <FeedPost post={post} key={post.id} />
+        // <Panel key={post.id}>
+        //   <div className="mb-5 flex flex-col gap-2">
+        //     <div>
+        //       <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink>
+        //       <span>{post.createdAt.toLocaleString()}</span>
+        //     </div>
+        //     <h3 className="font-bold">{post.title}</h3>
+        //     <p>{post.description}</p>
+        //   </div>
+        //   <hr />
+        //   <div className="flex flex-col gap-2">
+        //     <ValidatedForm
+        //       validator={commentValidator}
+        //       className="flex flex-col gap-2"
+        //       method="post"
+        //       resetAfterSubmit
+        //     >
+        //       <input type="hidden" name="postId" value={post.id} />
+        //       <MyTextarea name="description" label="Comentário" />
+        //       <MySubmitButton name="_action" value="comment" />
+        //     </ValidatedForm>
+        //     {post.Comment.map((comment) => (
+        //       <div className="flex flex-col gap-2" key={comment.id}>
+        //         <div>
+        //           <MyLink to={`/user/${comment.User.id}`}>
+        //             {comment.User.name}
+        //           </MyLink>
+        //           <span>{comment.createdAt.toLocaleString()}</span>
+        //         </div>
+        //         <p>{comment.description}</p>
+        //       </div>
+        //     ))}
+        //   </div>
+        // </Panel>
       ))}
       <div
         ref={endOfFeedInView.ref}
