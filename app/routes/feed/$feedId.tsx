@@ -60,7 +60,9 @@ export const loader = async ({
         take: 2,
         include: {
           User: true,
-          Comment: { include: { User: true }, orderBy: { id: "asc" } },
+          Feed: true,
+          Comment: { take: 3, include: { User: true }, orderBy: { id: "asc" } },
+          _count: { select: { Comment: true } },
         },
         orderBy: { id: "desc" },
       },
