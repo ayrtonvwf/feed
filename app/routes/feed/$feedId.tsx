@@ -1,6 +1,5 @@
-import type { ActionFunction, DataFunctionArgs } from "@remix-run/cloudflare";
-import { LoaderArgs, redirect } from "@remix-run/cloudflare";
-import { withZod } from "@remix-validated-form/with-zod";
+import { LoaderArgs } from "@remix-run/cloudflare";
+import { FetcherWithComponents } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import {
@@ -9,9 +8,8 @@ import {
   useTypedFetcher,
   useTypedLoaderData,
 } from "remix-typedjson";
-import { ValidatedForm, validationError } from "remix-validated-form";
+import { ValidatedForm } from "remix-validated-form";
 import invariant from "tiny-invariant";
-import { z } from "zod";
 import { Panel } from "~/components/block/panel";
 import { Spinner } from "~/components/block/spinner";
 import { FeedPost } from "~/components/feed/feed-post";
@@ -21,22 +19,8 @@ import { MyTextarea } from "~/components/form/textarea";
 import { MyH1, MyH2 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
 import { prisma } from "~/services/prisma.server";
-import { ulid } from "~/services/uild.server";
+import { CreatePostAction, postValidator } from "./$feedId/create-post";
 import { FeedLoaderData } from "./types";
-
-export const postValidator = withZod(
-  z.object({
-    title: z.string().min(5, { message: "Title is required" }),
-    description: z.string().min(5, { message: "Description is required" }),
-  })
-);
-
-export const commentValidator = withZod(
-  z.object({
-    postId: z.string().min(1, { message: "postId is required" }),
-    description: z.string().min(5, { message: "Description is required" }),
-  })
-);
 
 export const loader = async ({
   request,
@@ -77,75 +61,6 @@ export const loader = async ({
   return typedjson({ feed });
 };
 
-export const action: ActionFunction = async ({
-  request,
-  context,
-  params,
-}: DataFunctionArgs) => {
-  const user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-
-  invariant(
-    typeof params.feedId === "string",
-    `params.feedId should be a string`
-  );
-
-  const body = await request.clone().formData();
-  const { _action } = Object.fromEntries(body);
-
-  invariant(
-    typeof _action === "string" && ["post", "comment"].includes(_action),
-    `body._action should be either 'post' or 'comment'`
-  );
-
-  if (_action === "post") {
-    const validated = await postValidator.validate(
-      await request.clone().formData()
-    );
-
-    if (validated.error) {
-      // validationError comes from `remix-validated-form`
-      return validationError(validated.error, validated.data);
-    }
-
-    await prisma.$connect();
-    await prisma.post.create({
-      data: {
-        id: ulid(),
-        title: validated.data.title,
-        description: validated.data.description,
-        feedId: params.feedId,
-        userId: user.id,
-      },
-    });
-  }
-
-  if (_action === "comment") {
-    const validated = await commentValidator.validate(
-      await request.clone().formData()
-    );
-
-    if (validated.error) {
-      // validationError comes from `remix-validated-form`
-      return validationError(validated.error, validated.data);
-    }
-
-    await prisma.$connect();
-    await prisma.comment.create({
-      data: {
-        id: ulid(),
-        description: validated.data.description,
-        postId: validated.data.postId,
-        userId: user.id,
-      },
-    });
-  }
-
-  await prisma.$disconnect();
-  return redirect(`/feed/${params.feedId}`);
-};
-
 export default function () {
   const { feed: initialFeed } = useTypedLoaderData<FeedLoaderData>();
   const [feed, setFeed] = useState(initialFeed);
@@ -169,7 +84,6 @@ export default function () {
   }, [morePosts.data]);
 
   const endOfFeedInView = useInView();
-
   useEffect(() => {
     if (!endOfFeedInView.inView || !shouldFetchMore) {
       return;
@@ -186,11 +100,29 @@ export default function () {
     }
   }, [initialFeed]);
 
+  const postSubmitter = useTypedFetcher<CreatePostAction>();
+  useEffect(() => {
+    if (!postSubmitter?.data) {
+      return;
+    }
+    setFeed({
+      ...feed,
+      Post: [postSubmitter.data.createdPost, ...feed.Post],
+    });
+    setShouldFetchMore(true);
+  }, [postSubmitter.data]);
+
   return (
     <main className="container mx-auto">
       <MyH1>{feed.title}</MyH1>
       <Panel>
-        <ValidatedForm resetAfterSubmit validator={postValidator} method="post">
+        <ValidatedForm
+          resetAfterSubmit
+          validator={postValidator}
+          method="post"
+          action={`/feed/${feed.id}/create-post`}
+          fetcher={postSubmitter as FetcherWithComponents<never>}
+        >
           <fieldset className="flex flex-col gap-2">
             <MyH2>Novo post</MyH2>
             <MyInput name="title" label="Título" />
@@ -201,40 +133,6 @@ export default function () {
       </Panel>
       {feed.Post.map((post) => (
         <FeedPost post={post} key={post.id} />
-        // <Panel key={post.id}>
-        //   <div className="mb-5 flex flex-col gap-2">
-        //     <div>
-        //       <MyLink to={`/user/${post.User.id}`}>{post.User.name}</MyLink>
-        //       <span>{post.createdAt.toLocaleString()}</span>
-        //     </div>
-        //     <h3 className="font-bold">{post.title}</h3>
-        //     <p>{post.description}</p>
-        //   </div>
-        //   <hr />
-        //   <div className="flex flex-col gap-2">
-        //     <ValidatedForm
-        //       validator={commentValidator}
-        //       className="flex flex-col gap-2"
-        //       method="post"
-        //       resetAfterSubmit
-        //     >
-        //       <input type="hidden" name="postId" value={post.id} />
-        //       <MyTextarea name="description" label="Comentário" />
-        //       <MySubmitButton name="_action" value="comment" />
-        //     </ValidatedForm>
-        //     {post.Comment.map((comment) => (
-        //       <div className="flex flex-col gap-2" key={comment.id}>
-        //         <div>
-        //           <MyLink to={`/user/${comment.User.id}`}>
-        //             {comment.User.name}
-        //           </MyLink>
-        //           <span>{comment.createdAt.toLocaleString()}</span>
-        //         </div>
-        //         <p>{comment.description}</p>
-        //       </div>
-        //     ))}
-        //   </div>
-        // </Panel>
       ))}
       <div
         ref={endOfFeedInView.ref}
