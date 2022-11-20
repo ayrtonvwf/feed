@@ -29,11 +29,9 @@ export const loader = async ({ request, context, params }: LoaderArgs) => {
         Feed: true,
         Comment: {
           take: 3,
-          skip: 1,
+          skip: after ? 1 : 0,
           include: { User: true },
-          cursor: {
-            id: after,
-          },
+          cursor: after ? { id: after } : undefined,
           orderBy: { id: "asc" },
         },
       },
