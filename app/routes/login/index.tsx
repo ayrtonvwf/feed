@@ -4,6 +4,7 @@ import {
   LoaderArgs,
 } from "@remix-run/cloudflare";
 import { withZod } from "@remix-validated-form/with-zod";
+import { redirect } from "remix-typedjson";
 import { ValidatedForm, validationError } from "remix-validated-form";
 import { z } from "zod";
 import { Panel } from "~/components/block/panel";
@@ -11,6 +12,8 @@ import { MyInput } from "~/components/form/input";
 import { MySubmitButton } from "~/components/form/submit-button";
 import { MyH1 } from "~/components/typography/title";
 import { authenticator } from "~/services/auth.server";
+import { prisma } from "~/services/prisma.server";
+import { commitSession, getSession } from "~/services/session.server";
 
 export const validator = withZod(
   z.object({
@@ -44,20 +47,35 @@ export const action: ActionFunction = async ({
     return validationError(result.error, result.data);
   }
 
-  return await authenticator.authenticate("user-pass", request, {
-    successRedirect: "/",
+  const user = await authenticator.authenticate("user-pass", request, {
     failureRedirect: "/login",
+  });
+
+  await prisma.$connect();
+  const tenantUser = await prisma.tenantUser.findFirst({
+    where: { userId: user.id },
+  });
+  await prisma.$disconnect();
+
+  if (!tenantUser) {
+    return redirect("/");
+  }
+
+  const session = await getSession(request.headers.get("cookie"));
+  session.set("tenantId", tenantUser.tenantId);
+  session.set(authenticator.sessionKey, user);
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await commitSession(session),
+    },
   });
 };
 
 export default function Index() {
   return (
     <main className="container mx-auto">
-      <MyH1>
-        Faça aqui o seu login com o seu e-mail e a sua senha que você informou
-        na hora da criação da sua nova conta nesse maravilhoso sistema de feed
-      </MyH1>
-      <Panel>
+      <MyH1>Login</MyH1>
+      <Panel className="max-w-lg mx-auto">
         <ValidatedForm validator={validator} method="post">
           <fieldset className="flex flex-col gap-2">
             <MyInput name="email" label="Email" />

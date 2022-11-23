@@ -3,11 +3,15 @@ import { useIsSubmitting } from "remix-validated-form";
 type MySubmitButtonProps = {
   name?: string;
   value?: string;
+  children?:
+    | React.ReactNode
+    | ((props: { isSubmitting: boolean }) => React.ReactNode);
 };
 
 export const MySubmitButton: React.FC<MySubmitButtonProps> = ({
   name,
   value,
+  children,
 }) => {
   /**
    * @see https://www.remix-validated-form.io/integrate-your-components
@@ -22,7 +26,13 @@ export const MySubmitButton: React.FC<MySubmitButtonProps> = ({
       name={name}
       value={value}
     >
-      {isSubmitting ? "Submitting..." : "Submit"}
+      {children
+        ? typeof children === "function"
+          ? children({ isSubmitting })
+          : children
+        : isSubmitting
+        ? "Submitting..."
+        : "Submit"}
     </button>
   );
 };

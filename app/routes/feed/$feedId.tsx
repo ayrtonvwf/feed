@@ -113,7 +113,7 @@ export default function () {
   }, [postSubmitter.data]);
 
   return (
-    <main className="container mx-auto">
+    <main className="container mx-auto max-w-4xl">
       <MyH1>{feed.title}</MyH1>
       <Panel>
         <ValidatedForm
