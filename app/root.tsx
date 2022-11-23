@@ -15,11 +15,12 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
   useMatches,
   useSubmit,
   useTransition,
 } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import toastifyStyles from "react-toastify/dist/ReactToastify.css";
 import {
@@ -156,14 +157,22 @@ export default function App() {
   const onChangeTenant = (event: any) =>
     submit(event.currentTarget, { replace: true });
 
+  const location = useLocation();
+  const [savedLocation] = useState(location.key);
+
   useEffect(() => {
-    if (!toastMessage) {
+    /**
+     * wont render on redirect
+     */
+    if (!toastMessage || location.key !== savedLocation) {
       return;
     }
-    console.log({ toastMessage });
+    /**
+     * toastMessage won't be erased on page transition
+     */
     const notify = () => toast(toastMessage);
     notify();
-  }, [toastMessage]);
+  }, [toastMessage, savedLocation, location]);
 
   return (
     <html lang="pt-BR">
@@ -247,7 +256,7 @@ export default function App() {
         <Scripts />
         <LiveReload />
         <ToastContainer />
-        {toastMessage}
+        {toastMessage}-{savedLocation}-{location.key}
       </body>
     </html>
   );
