@@ -1,4 +1,4 @@
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { DateTime } from "~/components/typography/date-time";

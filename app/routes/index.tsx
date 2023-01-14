@@ -1,4 +1,4 @@
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { MyH1 } from "~/components/typography/title";
 import { prisma } from "~/services/prisma.server";

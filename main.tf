@@ -29,7 +29,7 @@ resource "fly_machine" "feedMachine" {
   app    = "feed"
   region = each.value
   name   = "feed-${each.value}"
-  image  = "flyio/iac-tutorial:latest"
+  image  = "feed/app:latest"
   services = [
     {
       ports = [
@@ -46,6 +46,7 @@ resource "fly_machine" "feedMachine" {
       "internal_port" : 80
     },
   ]
+  cputype = "shared"
   cpus = 1
   memorymb = 256
   depends_on = [fly_app.feedApp]

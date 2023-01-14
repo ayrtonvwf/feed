@@ -6,7 +6,7 @@ import {
   LoaderArgs,
   MetaFunction,
   redirect,
-} from "@remix-run/cloudflare";
+} from "@remix-run/node";
 import {
   Form,
   Links,

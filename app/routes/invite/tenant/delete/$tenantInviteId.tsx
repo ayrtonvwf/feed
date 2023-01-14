@@ -5,7 +5,7 @@ import {
   DataFunctionArgs,
   LinksFunction,
   LoaderArgs,
-} from "@remix-run/cloudflare";
+} from "@remix-run/node";
 import { Form, useNavigate } from "@remix-run/react";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";

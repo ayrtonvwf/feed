@@ -1,5 +1,5 @@
 import { TenantInvite } from "@prisma/client";
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import {
   redirect,

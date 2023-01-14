@@ -1,4 +1,4 @@
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import { typedjson } from "remix-typedjson";
 import invariant from "tiny-invariant";
 import { authenticator } from "~/services/auth.server";

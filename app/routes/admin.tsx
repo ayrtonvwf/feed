@@ -1,4 +1,4 @@
-import { LoaderArgs, LoaderFunction } from "@remix-run/cloudflare";
+import { LoaderArgs, LoaderFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import { redirect } from "remix-typedjson";
 import { MyNavLink } from "~/components/header/link";

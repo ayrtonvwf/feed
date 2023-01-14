@@ -1,4 +1,4 @@
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import { FetcherWithComponents } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";

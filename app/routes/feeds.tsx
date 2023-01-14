@@ -1,5 +1,5 @@
 import { Feed, Tenant } from "@prisma/client";
-import { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/cloudflare";
+import { ErrorBoundaryComponent, LoaderArgs } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import {
   redirect,
