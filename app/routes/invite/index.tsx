@@ -1,4 +1,4 @@
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import { Form, Outlet } from "@remix-run/react";
 import { typedjson, useTypedLoaderData } from "remix-typedjson";
 import { Panel } from "~/components/block/panel";

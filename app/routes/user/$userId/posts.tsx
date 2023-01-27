@@ -1,4 +1,4 @@
-import { LoaderArgs } from "@remix-run/cloudflare";
+import { LoaderArgs } from "@remix-run/node";
 import {
   typedjson,
   TypedJsonResponse,

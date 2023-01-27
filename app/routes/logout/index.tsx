@@ -1,8 +1,4 @@
-import {
-  ActionFunction,
-  DataFunctionArgs,
-  LoaderArgs,
-} from "@remix-run/cloudflare";
+import { ActionFunction, DataFunctionArgs, LoaderArgs } from "@remix-run/node";
 import { withZod } from "@remix-validated-form/with-zod";
 import { ValidatedForm } from "remix-validated-form";
 import { z } from "zod";

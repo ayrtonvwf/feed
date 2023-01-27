@@ -5,8 +5,7 @@ import {
   LinksFunction,
   LoaderArgs,
   MetaFunction,
-  redirect,
-} from "@remix-run/cloudflare";
+} from "@remix-run/node";
 import {
   Form,
   Links,
@@ -20,6 +19,7 @@ import {
   useTransition,
 } from "@remix-run/react";
 import {
+  redirect,
   typedjson,
   TypedJsonResponse,
   useTypedLoaderData,

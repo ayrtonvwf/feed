@@ -1,6 +1,6 @@
 import { Dialog } from "@reach/dialog";
 import styles from "@reach/dialog/styles.css";
-import { LinksFunction, LoaderArgs } from "@remix-run/cloudflare";
+import { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { Form, useNavigate } from "@remix-run/react";
 import { redirect, typedjson, useTypedLoaderData } from "remix-typedjson";
 import invariant from "tiny-invariant";
