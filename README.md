@@ -1,22 +1,21 @@
-# Welcome to Remix!
+# Welcome to Feed App!
+
+Uma rede social (estilo feed/facebook) multitenant.
 
 - [Remix Docs](https://remix.run/docs)
 
-## Development
+O objetivo dessa implementação é testar várias funcionalidades e métodos de deploy do Remix, bem como explorar as ferramentas de gestão de projeto do GitHub.
 
-You will be utilizing Wrangler for local development to emulate the Cloudflare runtime. This is already wired up in your package.json as the `dev` script:
+- Multitenant: o conteúdo de um tenant não se mistura com o conteúdo de outro.
+- Multifeed: cada tenant possui vários feeds.
+- Convites: um usuário pode entrar em um tenant por meio de um convite.
 
-```sh
-# start the remix dev server and wrangler
-yarn dev
-```
+![Exemplo de Feed](./screenshots/01_feed.png)
 
-Open up [http://127.0.0.1:8788](http://127.0.0.1:8788) and you should be ready to go!
+## Tecnologias utilizadas
 
-## Deployment
-
-Cloudflare Pages are currently only deployable through their Git provider integrations.
-
-If you don't already have an account, then [create a Cloudflare account here](https://dash.cloudflare.com/sign-up/pages) and after verifying your email address with Cloudflare, go to your dashboard and follow the [Cloudflare Pages deployment guide](https://developers.cloudflare.com/pages/framework-guides/deploy-anything).
-
-Configure the "Build command" should be set to `yarn build`, and the "Build output directory" should be set to `public`.
+- Tailwind;
+- Remix;
+- Prisma;
+- Cloudflare Workers (em migração para Fly.io);
+- TypeScript.
